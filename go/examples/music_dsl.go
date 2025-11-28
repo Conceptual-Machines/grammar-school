@@ -75,13 +75,15 @@ func (p *SimpleParser) Parse(input string) (*gs.CallChain, error) {
 func main() {
 	dsl := &MusicDSL{}
 	parser := &SimpleParser{}
-	_, err := gs.NewEngine("", dsl, parser)
+	runtime := &MusicRuntime{}
+
+	// Runtime is now stored in Engine (aligned with Python)
+	// Pass nil to use default runtime that prints actions
+	_, err := gs.NewEngine("", dsl, parser, runtime)
 	if err != nil {
 		fmt.Printf("Error creating engine: %v\n", err)
 		return
 	}
-
-	_ = &MusicRuntime{}
 
 	// Note: This won't work until a real parser is implemented
 	code := `track(name="Drums").add_clip(start=0, length=8)`
@@ -90,10 +92,14 @@ func main() {
 	fmt.Println("See parser_backend.go for the Parser interface")
 
 	// Once parser is implemented, uncomment:
+	// engine, _ := gs.NewEngine("", dsl, parser, runtime)
 	// plan, err := engine.Compile(code)
 	// if err != nil {
 	// 	fmt.Printf("Error compiling: %v\n", err)
 	// 	return
 	// }
-	// engine.Execute(context.Background(), runtime, plan)
+	// Runtime is stored in engine, so Execute doesn't need it (aligned with Python)
+	// engine.Execute(context.Background(), plan)
+	// Or override with a different runtime:
+	// engine.Execute(context.Background(), plan, &OtherRuntime{})
 }

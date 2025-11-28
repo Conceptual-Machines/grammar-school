@@ -8,10 +8,10 @@ only valid DSL code that can be executed by Grammar School.
 
 from openai import OpenAI
 
-from grammar_school import Action, Engine, Runtime, verb
+from grammar_school import Action, Grammar, Runtime, verb
 
 
-class TaskDSL:
+class TaskGrammar(Grammar):
     """A simple task management DSL for creating and managing tasks."""
 
     @verb
@@ -103,8 +103,8 @@ def integrate_with_gpt5():
     """
     client = OpenAI()
 
-    # Initialize Grammar School - single entry point
-    engine = Engine(TaskDSL(), TaskRuntime())
+    # Initialize Grammar School
+    grammar = TaskGrammar(runtime=TaskRuntime())
 
     # Get the grammar definition for CFG
     grammar_def = get_grammar_definition()
@@ -166,7 +166,7 @@ def integrate_with_gpt5():
 
             try:
                 # Execute the DSL code using Grammar School
-                engine.execute(dsl_code)
+                grammar.execute(dsl_code)
             except Exception as e:
                 print(f"Error executing DSL: {e}")
                 # In a real scenario, you'd send this error back to GPT-5
@@ -185,8 +185,8 @@ def simple_example():
     print("Simple Grammar School Example (without GPT-5)")
     print("=" * 60)
 
-    # Single entry point - much simpler!
-    engine = Engine(TaskDSL(), TaskRuntime())
+    # Initialize Grammar School
+    grammar = TaskGrammar(runtime=TaskRuntime())
 
     # Example DSL code
     code = (
@@ -201,7 +201,7 @@ def simple_example():
     print("Execution:")
     print("-" * 60)
 
-    engine.execute(code)
+    grammar.execute(code)
 
 
 if __name__ == "__main__":

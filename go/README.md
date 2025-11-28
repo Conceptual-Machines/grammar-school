@@ -21,6 +21,7 @@ import (
 
 type MyDSL struct{}
 
+// Verb handlers transform DSL syntax → Actions (pure, no side effects)
 func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
     name := args["name"].Str
     action := gs.Action{
@@ -34,6 +35,7 @@ func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, 
 
 type MyRuntime struct{}
 
+// Runtime executes Actions → Real world effects (side effects, state management)
 func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
     fmt.Printf("Hello, %v!\n", a.Payload["name"])
     return nil
@@ -42,13 +44,93 @@ func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
 func main() {
     dsl := &MyDSL{}
     parser := &MyParser{} // Implement gs.Parser interface
-    engine, _ := gs.NewEngine("", dsl, parser)
-    runtime := &MyRuntime{}
+
+    // Runtime is stored in Engine (aligned with Python)
+    // Pass nil to use default runtime that prints actions
+    engine, _ := gs.NewEngine("", dsl, parser, &MyRuntime{})
 
     plan, _ := engine.Compile(`greet(name="World")`)
-    engine.Execute(context.Background(), runtime, plan)
+    // Runtime is stored in engine, so Execute doesn't need it
+    engine.Execute(context.Background(), plan)
+
+    // Or override with a different runtime for this call:
+    // engine.Execute(context.Background(), plan, &OtherRuntime{})
 }
 ```
+
+## Understanding the Architecture
+
+Grammar School uses a **two-layer architecture** (aligned with Python):
+
+1. **Verb handlers (methods on DSL struct)**: Transform DSL syntax → Actions (pure, no side effects)
+2. **Runtime**: Execute Actions → Real world effects (side effects, state management)
+
+**Why this separation?**
+- Same Engine works with different Runtimes (testing, production, mocking)
+- Verb handlers are pure and easily testable
+- Runtime handles all state and side effects independently
+
+## Runtime Output
+
+**Default Runtime**: Prints actions to **stdout** (standard output/console)
+
+**Custom Runtimes**: Can output anywhere:
+- Files (write to disk)
+- Databases (store in SQL/NoSQL)
+- APIs (HTTP requests)
+- Logging systems
+- In-memory structures
+- Or any combination
+
+Example custom runtime that writes to a file:
+```go
+type FileRuntime struct {
+    filename string
+}
+
+func (r *FileRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
+    f, err := os.OpenFile(r.filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+    _, err = fmt.Fprintf(f, "%s: %v\n", a.Kind, a.Payload)
+    return err
+}
+
+engine, _ := gs.NewEngine("", dsl, parser, &FileRuntime{filename: "output.log"})
+```
+
+## Streaming Actions
+
+For large DSL programs or real-time processing, you can stream actions as they're generated:
+
+```go
+engine, _ := gs.NewEngine("", dsl, parser, runtime)
+
+// Stream actions one at a time (memory efficient)
+actions, errors := engine.Stream(`track(name="A").track(name="B").track(name="C")`)
+for {
+    select {
+    case action, ok := <-actions:
+        if !ok {
+            return // Channel closed
+        }
+        fmt.Printf("Got action: %s\n", action.Kind)
+        // Process action immediately, don't wait for all actions
+        runtime.ExecuteAction(context.Background(), action)
+    case err := <-errors:
+        if err != nil {
+            log.Fatal(err)
+        }
+    }
+}
+```
+
+This is useful for:
+- **Large programs**: Don't load all actions into memory at once
+- **Real-time processing**: Start executing actions before compilation completes
+- **Memory efficiency**: Process actions incrementally
 
 ## Examples
 

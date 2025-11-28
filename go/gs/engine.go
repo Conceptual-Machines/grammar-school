@@ -7,20 +7,38 @@ import (
 )
 
 // Engine is the main Grammar School engine that orchestrates parsing, interpretation, and execution.
+// It corresponds to the Grammar class in Python.
+//
+// The Engine uses a two-layer architecture:
+// 1. Verb handlers (methods on the DSL struct): Transform DSL syntax → Actions (pure, no side effects)
+// 2. Runtime: Execute Actions → Real world effects (side effects, state management)
+//
+// This separation allows:
+// - Same Engine to work with different Runtimes (testing, production, mocking)
+// - Verb handlers to be pure and easily testable
+// - Runtime to manage state independently of Engine logic
 type Engine struct {
 	grammar string
 	parser  Parser
 	verbs   map[string]VerbHandler
 	dsl     interface{}
+	runtime Runtime // Runtime is stored internally, like in Python
 }
 
-// NewEngine creates a new Engine with the given grammar, DSL instance, and parser.
-func NewEngine(grammar string, dsl interface{}, parser Parser) (*Engine, error) {
+// NewEngine creates a new Engine with the given grammar, DSL instance, parser, and optional runtime.
+// If runtime is nil, a default runtime that prints actions is used.
+func NewEngine(grammar string, dsl interface{}, parser Parser, runtime Runtime) (*Engine, error) {
 	engine := &Engine{
 		grammar: grammar,
 		parser:  parser,
 		verbs:   make(map[string]VerbHandler),
 		dsl:     dsl,
+		runtime: runtime,
+	}
+
+	// Use default runtime if none provided (like Python)
+	if engine.runtime == nil {
+		engine.runtime = &DefaultRuntime{}
 	}
 
 	if err := engine.collectVerbs(); err != nil {
@@ -104,6 +122,50 @@ func (e *Engine) Compile(code string) ([]Action, error) {
 	return e.interpret(callChain)
 }
 
+// Stream parses DSL code and returns a channel that streams Actions as they're generated.
+// This allows for memory-efficient processing and real-time execution of large DSL programs.
+//
+// The channel will be closed when all actions have been generated or an error occurs.
+// If an error occurs, it will be sent on the error channel before closing.
+//
+// Example:
+//
+//	actions, errors := engine.Stream(`track(name="A").track(name="B")`)
+//	for {
+//	  select {
+//	  case action, ok := <-actions:
+//	    if !ok {
+//	      return
+//	    }
+//	    fmt.Printf("Got action: %s\n", action.Kind)
+//	  case err := <-errors:
+//	    if err != nil {
+//	      log.Fatal(err)
+//	    }
+//	  }
+//	}
+func (e *Engine) Stream(code string) (<-chan Action, <-chan error) {
+	actions := make(chan Action)
+	errors := make(chan error, 1)
+
+	go func() {
+		defer close(actions)
+		defer close(errors)
+
+		callChain, err := e.parser.Parse(code)
+		if err != nil {
+			errors <- fmt.Errorf("parse error: %w", err)
+			return
+		}
+
+		if err := e.interpretStream(callChain, actions); err != nil {
+			errors <- err
+		}
+	}()
+
+	return actions, errors
+}
+
 // interpret walks the CallChain and dispatches to verb handlers.
 func (e *Engine) interpret(callChain *CallChain) ([]Action, error) {
 	var actions []Action
@@ -134,10 +196,53 @@ func (e *Engine) interpret(callChain *CallChain) ([]Action, error) {
 	return actions, nil
 }
 
-// Execute executes a plan of actions using the given runtime.
-func (e *Engine) Execute(ctx context.Context, runtime Runtime, plan []Action) error {
+// interpretStream walks the CallChain and streams Actions to the provided channel.
+func (e *Engine) interpretStream(callChain *CallChain, actions chan<- Action) error {
+	ctx := NewContext()
+
+	for _, call := range callChain.Calls {
+		handler, ok := e.verbs[call.Name]
+		if !ok {
+			return fmt.Errorf("unknown verb: %s", call.Name)
+		}
+
+		args := make(Args)
+		for _, arg := range call.Args {
+			args[arg.Name] = arg.Value
+		}
+
+		callActions, newCtx, err := handler(args, ctx)
+		if err != nil {
+			return fmt.Errorf("verb handler %s error: %w", call.Name, err)
+		}
+
+		// Stream actions as they're generated
+		for _, action := range callActions {
+			actions <- action
+		}
+
+		if newCtx != nil {
+			ctx = newCtx
+		}
+	}
+
+	return nil
+}
+
+// Execute executes a plan of actions using the engine's runtime.
+// If a runtime is provided, it overrides the engine's default runtime for this call.
+func (e *Engine) Execute(ctx context.Context, plan []Action, runtime ...Runtime) error {
+	rt := e.runtime
+	if len(runtime) > 0 && runtime[0] != nil {
+		rt = runtime[0]
+	}
+
+	if rt == nil {
+		return fmt.Errorf("no runtime available")
+	}
+
 	for _, action := range plan {
-		if err := runtime.ExecuteAction(ctx, action); err != nil {
+		if err := rt.ExecuteAction(ctx, action); err != nil {
 			return fmt.Errorf("execute action %s error: %w", action.Kind, err)
 		}
 	}

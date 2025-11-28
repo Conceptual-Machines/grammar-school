@@ -3,7 +3,7 @@
 from grammar_school import Action, Grammar, Runtime, verb
 
 
-class MusicDSL:
+class MusicGrammar(Grammar):
     """A simple music DSL for creating tracks and clips."""
 
     @verb
@@ -31,20 +31,22 @@ class MusicRuntime(Runtime):
 
 def main():
     """Example usage of the Music DSL."""
-    dsl = MusicDSL()
-    grammar = Grammar(dsl)
-    runtime = MusicRuntime()
+    # Using custom runtime
+    grammar = MusicGrammar(runtime=MusicRuntime())
+
+    # Or use default runtime (just prints actions):
+    # grammar = MusicGrammar()
 
     code = 'track(name="Drums").add_clip(start=0, length=8)'
     print(f"Code: {code}")
     print("\nExecuting:")
-    grammar.execute(code, runtime)
+    grammar.execute(code)
 
     print("\n" + "=" * 50)
     code2 = 'track(name="FX", color="blue").mute()'
     print(f"Code: {code2}")
     print("\nExecuting:")
-    grammar.execute(code2, runtime)
+    grammar.execute(code2)
 
 
 if __name__ == "__main__":

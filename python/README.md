@@ -11,23 +11,92 @@ pip install -e .
 ## Quick Start
 
 ```python
-from grammar_school import Action, Grammar, Runtime, verb
+from grammar_school import Action, Grammar, verb
 
-class MyDSL:
+class MyGrammar(Grammar):
     @verb
     def greet(self, name, _context=None):
+        # @verb methods return Actions (data structures)
+        # They are pure - no side effects here!
         return Action(kind="greet", payload={"name": name})
 
+# Default runtime prints actions - no Runtime import needed!
+grammar = MyGrammar()
+grammar.execute('greet(name="World")')
+
+# Or provide a custom runtime for actual behavior
+from grammar_school import Runtime
+
 class MyRuntime(Runtime):
+    def __init__(self):
+        self.greetings = []  # Runtime manages state
+
     def execute(self, action: Action) -> None:
-        print(f"Hello, {action.payload['name']}!")
+        # Runtime performs actual side effects
+        if action.kind == "greet":
+            name = action.payload["name"]
+            self.greetings.append(name)
+            print(f"Hello, {name}!")
 
-dsl = MyDSL()
-grammar = Grammar(dsl)
-runtime = MyRuntime()
-
-grammar.execute('greet(name="World")', runtime)
+grammar = MyGrammar(runtime=MyRuntime())
+grammar.execute('greet(name="World")')
 ```
+
+## Understanding the Architecture
+
+Grammar School uses a **two-layer architecture**:
+
+1. **Grammar + @verb methods**: Transform DSL syntax → Actions (pure, no side effects)
+2. **Runtime**: Execute Actions → Real world effects (side effects, state management)
+
+**Why this separation?**
+- Same Grammar works with different Runtimes (testing, production, mocking)
+- @verb methods are pure and easily testable
+- Runtime handles all state and side effects independently
+
+## Runtime Output
+
+**Default Runtime**: Prints actions to **stdout** (standard output/console)
+
+**Custom Runtimes**: Can output anywhere:
+- Files (write to disk)
+- Databases (store in SQL/NoSQL)
+- APIs (HTTP requests)
+- Logging systems
+- In-memory structures
+- Or any combination
+
+Example custom runtime that writes to a file:
+```python
+class FileRuntime(Runtime):
+    def __init__(self, filename: str):
+        self.filename = filename
+
+    def execute(self, action: Action) -> None:
+        with open(self.filename, 'a') as f:
+            f.write(f"{action.kind}: {action.payload}\n")
+
+grammar = MyGrammar(runtime=FileRuntime("output.log"))
+```
+
+## Streaming Actions
+
+For large DSL programs or real-time processing, you can stream actions as they're generated:
+
+```python
+grammar = MyGrammar()
+
+# Stream actions one at a time (memory efficient)
+for action in grammar.stream('track(name="A").track(name="B").track(name="C")'):
+    print(f"Got action: {action.kind}")
+    # Process action immediately, don't wait for all actions
+    runtime.execute(action)  # Execute as they arrive
+```
+
+This is useful for:
+- **Large programs**: Don't load all actions into memory at once
+- **Real-time processing**: Start executing actions before compilation completes
+- **Memory efficiency**: Process actions incrementally
 
 ## Examples
 
