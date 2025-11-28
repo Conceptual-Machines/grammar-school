@@ -25,6 +25,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
+          no-cache: false
 
       - name: Build Go Docker image
         uses: docker/build-push-action@v5
@@ -35,6 +36,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
+
+      - name: Verify git in container
+        run: |
+          docker run --rm pre-commit-python:latest git --version
 
       - name: Run pre-commit
         run: |
