@@ -4,11 +4,13 @@ FROM python:${PYTHON_VERSION}-slim
 WORKDIR /app
 
 # Install system dependencies
+# Note: git is required for pre-commit hooks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && git --version
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
