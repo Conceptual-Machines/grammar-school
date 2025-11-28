@@ -38,4 +38,3 @@ type Args map[string]Value
 // VerbHandler is the signature for verb handler methods.
 // Returns: actions, new context (can be nil to keep current), error
 type VerbHandler func(args Args, ctx *Context) ([]Action, *Context, error)
-

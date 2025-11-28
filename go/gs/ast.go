@@ -50,4 +50,3 @@ type Call struct {
 type CallChain struct {
 	Calls []Call
 }
-

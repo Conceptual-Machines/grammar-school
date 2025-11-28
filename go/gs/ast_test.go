@@ -89,4 +89,3 @@ func TestCallChain(t *testing.T) {
 		t.Errorf("expected second call name 'add_clip', got %s", chain.Calls[1].Name)
 	}
 }
-

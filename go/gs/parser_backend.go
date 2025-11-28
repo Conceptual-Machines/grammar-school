@@ -5,4 +5,3 @@ package gs
 type Parser interface {
 	Parse(input string) (*CallChain, error)
 }
-

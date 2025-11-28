@@ -6,4 +6,3 @@ import "context"
 type Runtime interface {
 	ExecuteAction(ctx context.Context, a Action) error
 }
-
