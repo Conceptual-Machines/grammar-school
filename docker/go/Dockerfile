@@ -5,7 +5,12 @@ WORKDIR /app
 
 # Install system dependencies
 # Note: git is required for pre-commit hooks
-RUN apk add --no-cache git ca-certificates
+# Python and uv are required for pre-commit (pre-commit is a Python tool)
+RUN apk add --no-cache git ca-certificates python3 py3-pip curl
+
+# Install uv (required for pre-commit)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
 
 # Install golangci-lint
 RUN wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
