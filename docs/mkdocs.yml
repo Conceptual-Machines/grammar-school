@@ -8,6 +8,7 @@ repo_url: https://github.com/Conceptual-Machines/grammar-school
 edit_uri: edit/main/docs/
 
 docs_dir: .
+site_dir: ../site
 
 theme:
   name: material
