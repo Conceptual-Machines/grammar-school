@@ -78,18 +78,13 @@ def get_grammar_definition() -> str:
     This can be used as a CFG for GPT-5's custom tools to ensure
     the model only generates valid Grammar School DSL code.
 
-    Note: The grammar is cleaned up to work with GPT-5's CFG requirements:
-    - Removes %import and %ignore directives (not supported in GPT-5 CFG)
-    - Ensures proper terminal definitions
+    The grammar is automatically cleaned to work with GPT-5's CFG requirements
+    by removing Lark-specific directives (e.g., %import, %ignore).
     """
-    from grammar_school.backend_lark import DEFAULT_GRAMMAR
+    from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 
     # Clean up grammar for GPT-5 CFG (remove unsupported directives)
-    cleaned_grammar = "\n".join(
-        line for line in DEFAULT_GRAMMAR.split("\n") if not line.strip().startswith("%")
-    )
-
-    return cleaned_grammar
+    return LarkBackend.clean_grammar_for_cfg(DEFAULT_GRAMMAR)
 
 
 def integrate_with_gpt5():
