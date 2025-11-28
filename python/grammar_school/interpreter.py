@@ -57,20 +57,11 @@ class Interpreter:
                 raise ValueError(f"Verb handler {call.name} returned invalid result: {result}")
         
         return actions
-    
+
     def _coerce_args(self, args: dict[str, Value]) -> dict[str, Any]:
         """Coerce Value objects to native Python types."""
         coerced = {}
         for name, value in args.items():
-            if value.kind == "number":
-                coerced[name] = value.value
-            elif value.kind == "string":
-                coerced[name] = value.value
-            elif value.kind == "identifier":
-                coerced[name] = value.value
-            elif value.kind == "bool":
-                coerced[name] = value.value
-            else:
-                coerced[name] = value.value
+            coerced[name] = value.value
         return coerced
 

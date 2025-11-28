@@ -42,7 +42,7 @@ jobs:
       - name: Lint with ruff
         working-directory: python
         run: |
-          ruff check .
+          ruff check --fix .
 
       - name: Format check with ruff
         working-directory: python
