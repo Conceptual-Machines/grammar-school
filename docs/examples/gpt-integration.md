@@ -67,6 +67,9 @@ class TaskRuntime(Runtime):
 grammar = TaskGrammar(runtime=TaskRuntime())
 
 # Get grammar definition for CFG
+# Note: TaskGrammar defines the *semantics* (verbs: create_task, complete_task, etc.)
+# but DEFAULT_GRAMMAR defines the *syntax* (how to parse "verb_name(arg=value)").
+# GPT-5 needs the syntax rules to generate valid code structure.
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 
 # Clean up grammar for GPT-5 CFG (remove unsupported directives)

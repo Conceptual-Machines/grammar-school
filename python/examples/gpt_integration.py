@@ -78,6 +78,32 @@ def get_grammar_definition() -> str:
     This can be used as a CFG for GPT-5's custom tools to ensure
     the model only generates valid Grammar School DSL code.
 
+    **Low-level explanation of what happens:**
+
+    1. **DEFAULT_GRAMMAR** defines the *syntax* (parsing rules):
+       - How to parse: "create_task(name='test', priority='high')"
+       - Rules like: call_chain, call, args, value, etc.
+       - This is a Lark grammar that describes the structure of valid DSL code
+
+    2. **TaskGrammar** defines the *semantics* (what verbs do):
+       - The @verb methods: create_task, complete_task, list_tasks
+       - These are Python functions that return Action objects
+       - They define WHAT happens when a verb is called
+
+    3. **Execution flow when GPT-5 generates code:**
+       a. GPT-5 uses DEFAULT_GRAMMAR to generate valid syntax:
+          "create_task(name='Write docs', priority='high')"
+       b. TaskGrammar.parse() uses DEFAULT_GRAMMAR to parse the string into AST:
+          CallChain(calls=[Call(name="create_task", args=[...])])
+       c. TaskGrammar.compile() uses Interpreter to convert AST to Actions:
+          Interpreter looks up "create_task" in TaskGrammar's @verb methods
+          Calls TaskGrammar.create_task() → returns Action(kind="create_task", ...)
+       d. TaskGrammar.execute() runs the Runtime:
+          Runtime.execute(action) → actually creates the task
+
+    So DEFAULT_GRAMMAR tells GPT-5 HOW to write code (syntax),
+    while TaskGrammar tells Grammar School WHAT the code means (semantics).
+
     The grammar is automatically cleaned to work with GPT-5's CFG requirements
     by removing Lark-specific directives (e.g., %import, %ignore).
     """
