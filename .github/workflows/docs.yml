@@ -2,10 +2,6 @@ name: Documentation
 
 on:
   push:
-    paths:
-      - 'docs/**'
-      - 'python/**'
-      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
