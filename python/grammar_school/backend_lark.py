@@ -65,7 +65,7 @@ class ASTTransformer(Transformer):
 
         if token.type == "NUMBER":
             try:
-                num_val = int(token_str)
+                num_val: int | float = int(token_str)
             except ValueError:
                 num_val = float(token_str)
             return Value(kind="number", value=num_val)
@@ -90,4 +90,5 @@ class LarkBackend:
     def parse(self, code: str) -> CallChain:
         """Parse code into a CallChain AST."""
         tree = self.parser.parse(code)
-        return self.transformer.transform(tree)
+        result = self.transformer.transform(tree)
+        return result  # type: ignore[no-any-return]
