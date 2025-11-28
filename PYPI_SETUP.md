@@ -12,7 +12,7 @@ This document explains how to set up PyPI publishing for the Grammar School Pyth
 1. Go to your repository: https://github.com/Conceptual-Machines/grammar-school
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
-4. Add a secret named `PYPI_API_TOKEN` with your PyPI API token as the value
+4. Add a secret named `GS_PYPI_API_TOKEN` with your PyPI API token as the value
 
 ## How It Works
 
@@ -58,5 +58,5 @@ pip install grammar-school[docs]
 For testing before publishing to production PyPI, you can use Test PyPI:
 
 1. Create an account at https://test.pypi.org/
-2. Add `TEST_PYPI_API_TOKEN` as a GitHub secret
+2. Add `GS_TEST_PYPI_API_TOKEN` as a GitHub secret
 3. Update the workflow to publish to Test PyPI first for testing
