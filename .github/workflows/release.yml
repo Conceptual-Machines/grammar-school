@@ -63,7 +63,7 @@ jobs:
       - name: Build Python package
         run: |
           cd python
-          uv pip install --system build
+          uv pip install --system build twine
           python -m build
 
       - name: Test Python package
@@ -76,6 +76,14 @@ jobs:
         run: |
           cd go
           go test ./...
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          cd python
+          python -m twine upload dist/* --skip-existing
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
