@@ -61,3 +61,6 @@ Thumbs.db
 docs/site/
 docs/.cache/
 
+# Docker
+*.tar
+

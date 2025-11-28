@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  python-test:
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+    volumes:
+      - ./python:/app/python
+      - python-cache:/root/.cache
+    command: pytest -v
+
+  python-lint:
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+    volumes:
+      - ./python:/app/python
+    command: sh -c "ruff check . && ruff format --check . && mypy grammar_school || true"
+
+  go-test:
+    build:
+      context: .
+      dockerfile: docker/go/Dockerfile
+    volumes:
+      - ./go:/app/go
+      - go-cache:/go/pkg/mod
+    command: go test -v ./...
+
+  go-lint:
+    build:
+      context: .
+      dockerfile: docker/go/Dockerfile
+    volumes:
+      - ./go:/app/go
+    command: sh -c "gofmt -s -l . && go vet ./... && golangci-lint run"
+
+volumes:
+  python-cache:
+  go-cache:
+
