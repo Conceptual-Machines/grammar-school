@@ -58,4 +58,3 @@ docs/
 - Include code examples
 - Use tabs for language-specific examples
 - Add diagrams where helpful (Mermaid supported)
-

@@ -55,4 +55,3 @@ if __name__ == "__main__":
 
     update_version(version)
     print(f"\nVersion updated to {version}")
-

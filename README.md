@@ -32,15 +32,15 @@ go build ./...
 grammar-school/
   README.md          # This file
   SPEC.md            # Shared conceptual specification
-  
+
   python/            # Python implementation
     grammar_school/
     examples/
-    
+
   go/                # Go implementation
     gs/
     examples/
-    
+
   docs/              # Additional documentation
 ```
 
@@ -58,4 +58,3 @@ See [SPEC.md](./SPEC.md) for the complete specification.
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-

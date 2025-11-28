@@ -78,4 +78,3 @@ docs/
 
 - Python API docs are auto-generated using `mkdocstrings`
 - Go API docs are manually written (can be enhanced with godoc integration)
-

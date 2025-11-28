@@ -18,7 +18,7 @@ Verbs are the functions that your DSL will support.
                 kind="create_user",
                 payload={"name": name, "email": email}
             )
-        
+
         @verb
         def send_email(self, to, subject, _context=None):
             return Action(
@@ -72,7 +72,7 @@ The Runtime executes the Actions produced by your verbs.
         def __init__(self):
             self.users = []
             self.emails_sent = []
-        
+
         def execute(self, action: Action) -> None:
             if action.kind == "create_user":
                 user = {
@@ -81,7 +81,7 @@ The Runtime executes the Actions produced by your verbs.
                 }
                 self.users.append(user)
                 print(f"Created user: {user['name']}")
-            
+
             elif action.kind == "send_email":
                 email = {
                     "to": action.payload["to"],
@@ -108,7 +108,7 @@ The Runtime executes the Actions produced by your verbs.
             }
             r.users = append(r.users, user)
             fmt.Printf("Created user: %v\n", user["name"])
-        
+
         case "send_email":
             email := map[string]interface{}{
                 "to":      a.Payload["to"],
@@ -212,4 +212,3 @@ You can support method chaining by returning context:
         return []gs.Action{action}, ctx, nil
     }
     ```
-

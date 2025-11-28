@@ -64,4 +64,3 @@ go get github.com/Conceptual-Machines/grammar-school/go/gs
     import "grammar-school/go/gs"
     // Check that package imports successfully
     ```
-

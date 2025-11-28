@@ -71,4 +71,3 @@ Complete API reference for the Grammar School Python implementation.
     options:
       show_root_heading: true
       show_source: true
-

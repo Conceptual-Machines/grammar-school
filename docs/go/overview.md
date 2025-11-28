@@ -80,4 +80,3 @@ The Engine uses reflection to automatically discover and register methods with t
 - [API Reference](api-reference.md) - Complete API documentation
 - [Core Types](core-types.md) - Detailed type information
 - [Engine](engine.md) - Engine usage guide
-

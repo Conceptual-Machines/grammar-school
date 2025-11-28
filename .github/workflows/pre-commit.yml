@@ -40,4 +40,3 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-python:latest \
             sh -c "cd /workspace && uv pip install --system pre-commit && pre-commit run --all-files"
-

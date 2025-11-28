@@ -194,4 +194,3 @@ grammar-school/
 ## Questions?
 
 Feel free to open an issue for questions or discussions!
-

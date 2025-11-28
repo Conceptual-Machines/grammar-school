@@ -168,4 +168,3 @@ Grammars define the syntax of your DSL. Grammar School provides a default gramma
     `
     engine, _ := gs.NewEngine(customGrammar, dsl, parser)
     ```
-

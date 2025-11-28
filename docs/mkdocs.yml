@@ -78,29 +78,28 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started:
-    - Quick Start: getting-started/quick-start.md
-    - Installation: getting-started/installation.md
-    - Concepts: getting-started/concepts.md
+      - Quick Start: getting-started/quick-start.md
+      - Installation: getting-started/installation.md
+      - Concepts: getting-started/concepts.md
   - Python API:
-    - Overview: python/overview.md
-    - Core Types: python/core-types.md
-    - Grammar: python/grammar.md
-    - Interpreter: python/interpreter.md
-    - Runtime: python/runtime.md
-    - API Reference: python/api-reference.md
+      - Overview: python/overview.md
+      - Core Types: python/core-types.md
+      - Grammar: python/grammar.md
+      - Interpreter: python/interpreter.md
+      - Runtime: python/runtime.md
+      - API Reference: python/api-reference.md
   - Go API:
-    - Overview: go/overview.md
-    - Core Types: go/core-types.md
-    - Engine: go/engine.md
-    - Runtime: go/runtime.md
-    - API Reference: go/api-reference.md
+      - Overview: go/overview.md
+      - Core Types: go/core-types.md
+      - Engine: go/engine.md
+      - Runtime: go/runtime.md
+      - API Reference: go/api-reference.md
   - Examples:
-    - Music DSL: examples/music-dsl.md
-    - Building Your DSL: examples/building-dsl.md
+      - Music DSL: examples/music-dsl.md
+      - Building Your DSL: examples/building-dsl.md
   - Specification: specification.md
   - Contributing: contributing.md
 
 extra:
   version:
     provider: mike
-

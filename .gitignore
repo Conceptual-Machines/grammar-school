@@ -64,3 +64,5 @@ docs/.cache/
 # Docker
 *.tar
 
+# Node modules (for prettier)
+node_modules/

@@ -103,4 +103,3 @@ call_chain: call ('.' call)*
 `
 engine, err := gs.NewEngine(customGrammar, dsl, parser)
 ```
-

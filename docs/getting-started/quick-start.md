@@ -72,7 +72,7 @@ Let's create a simple greeting DSL that demonstrates the core concepts.
         if msg, ok := args["message"]; ok {
             message = msg.Str
         }
-        
+
         action := gs.Action{
             Kind: "greet",
             Payload: map[string]interface{}{
@@ -113,4 +113,3 @@ Let's create a simple greeting DSL that demonstrates the core concepts.
 - Learn about [Core Concepts](concepts.md)
 - Explore the [Python API](../python/overview.md) or [Go API](../go/overview.md)
 - Check out [Examples](../examples/music-dsl.md)
-

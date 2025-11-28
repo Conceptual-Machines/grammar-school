@@ -56,4 +56,3 @@ The GitHub Actions workflows use these Docker images for reproducible CI builds.
 2. **Isolation** - No conflicts with host system
 3. **Speed** - Docker layer caching speeds up builds
 4. **Consistency** - Same setup locally and in CI
-

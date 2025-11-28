@@ -100,4 +100,3 @@ This gives: consistency, flexibility, multi-runtime choice, no forced coupling.
 - No cross-language runtime communication by default
 
 Each implementation stands on its own.
-

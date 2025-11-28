@@ -89,4 +89,3 @@ jobs:
           git add python/pyproject.toml python/grammar_school/version.py go/gs/version.go VERSION
           git commit -m "chore: bump version to ${{ steps.tag_version.outputs.version }}" || exit 0
           git push || exit 0
-

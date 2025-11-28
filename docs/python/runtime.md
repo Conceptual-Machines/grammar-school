@@ -42,7 +42,7 @@ class MusicRuntime(Runtime):
     def __init__(self):
         self.tracks = []
         self.current_track = None
-    
+
     def execute(self, action: Action) -> None:
         if action.kind == "create_track":
             self.current_track = {
@@ -69,4 +69,3 @@ def execute(self, action: Action) -> None:
             raise ValueError(f"Track {action.payload['name']} already exists")
         # ...
 ```
-

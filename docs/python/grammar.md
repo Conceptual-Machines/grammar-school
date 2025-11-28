@@ -68,4 +68,3 @@ Grammar School uses [Lark](https://github.com/lark-parser/lark) for parsing, whi
 - Ambiguity resolution
 
 See the [Lark documentation](https://lark-parser.readthedocs.io/) for complete grammar syntax.
-

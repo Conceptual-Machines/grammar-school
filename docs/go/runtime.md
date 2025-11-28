@@ -105,4 +105,3 @@ func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
     return nil
 }
 ```
-

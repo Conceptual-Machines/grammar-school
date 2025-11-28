@@ -50,7 +50,7 @@ go-all: go-format-check go-vet go-lint go-test ## Run all Go checks
 
 # Pre-commit
 pre-commit-install: ## Install pre-commit hooks
-	uv pip install pre-commit
+	uv pip install --system pre-commit
 	pre-commit install
 
 pre-commit-run: ## Run pre-commit on all files
@@ -104,4 +104,3 @@ clean: ## Clean build artifacts
 	find . -type f -name "coverage.out" -delete
 	find . -type f -name "coverage.xml" -delete
 	find . -type d -name "htmlcov" -exec rm -r {} + 2>/dev/null || true
-

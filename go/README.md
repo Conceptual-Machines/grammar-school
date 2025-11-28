@@ -44,7 +44,7 @@ func main() {
     parser := &MyParser{} // Implement gs.Parser interface
     engine, _ := gs.NewEngine("", dsl, parser)
     runtime := &MyRuntime{}
-    
+
     plan, _ := engine.Compile(`greet(name="World")`)
     engine.Execute(context.Background(), runtime, plan)
 }
@@ -85,4 +85,3 @@ The `Parser` interface allows you to use any parser library:
 - [participle](https://github.com/alecthomas/participle) - PEG parser
 - [pigeon](https://github.com/mna/pigeon) - PEG parser generator
 - Custom PEG/EBNF parsers
-

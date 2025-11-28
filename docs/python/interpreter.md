@@ -62,4 +62,3 @@ def add_clip(self, start, length, _context=None):
     track_name = _context.payload["name"] if _context else None
     return Action(...)
 ```
-

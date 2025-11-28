@@ -51,4 +51,3 @@ grammar = Grammar(dsl_instance, grammar=optional_custom_grammar)
 - [API Reference](api-reference.md) - Complete API documentation
 - [Core Types](core-types.md) - Detailed type information
 - [Grammar](grammar.md) - Grammar definition guide
-

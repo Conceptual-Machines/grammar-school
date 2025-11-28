@@ -15,4 +15,3 @@ The example demonstrates:
 - Creating a Grammar instance
 - Executing DSL code that chains method calls
 - Using a Runtime to execute actions
-

@@ -24,14 +24,14 @@ class MusicDSL:
             kind="create_track",
             payload={"name": name, "color": color or "default"}
         )
-    
+
     @verb
     def add_clip(self, start, length, _context=None):
         return Action(
             kind="add_clip",
             payload={"start": start, "length": length}
         )
-    
+
     @verb
     def add_effect(self, name, amount=1.0, _context=None):
         return Action(
@@ -43,7 +43,7 @@ class MusicRuntime(Runtime):
     def __init__(self):
         self.tracks = []
         self.current_track = None
-    
+
     def execute(self, action: Action) -> None:
         if action.kind == "create_track":
             self.current_track = {
@@ -53,14 +53,14 @@ class MusicRuntime(Runtime):
                 "effects": []
             }
             self.tracks.append(self.current_track)
-        
+
         elif action.kind == "add_clip":
             if self.current_track:
                 self.current_track["clips"].append({
                     "start": action.payload["start"],
                     "length": action.payload["length"]
                 })
-        
+
         elif action.kind == "add_effect":
             if self.current_track:
                 self.current_track["effects"].append({
@@ -159,4 +159,3 @@ func (r *MusicRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
 2. **Context Passing** - The `_context` parameter allows verbs to access previous actions
 3. **Action Composition** - Multiple actions can be returned from a single verb
 4. **Runtime State** - The runtime maintains state across action executions
-

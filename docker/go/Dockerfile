@@ -16,4 +16,3 @@ RUN go mod download
 
 # Default command
 CMD ["go", "test", "./..."]
-

@@ -178,4 +178,3 @@ func (r *MyRuntime) ExecuteAction(ctx context.Context, a Action) error {
     return nil
 }
 ```
-

@@ -61,4 +61,3 @@ jobs:
           flags: go
           name: go-coverage
           fail_ci_if_error: false
-

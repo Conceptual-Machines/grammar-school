@@ -6,6 +6,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        exclude: ^docs/mkdocs\.yml$
       - id: check-added-large-files
       - id: check-json
       - id: check-toml
@@ -38,11 +39,17 @@ repos:
         files: ^go/.*\.go$
       - id: go-vet
         files: ^go/.*\.go$
+        # Skip in local pre-commit - runs in Docker CI
+        stages: []
       - id: go-mod-tidy
         files: ^go/go\.mod$
       - id: golangci-lint
         args: [--timeout=5m]
         files: ^go/.*\.go$
+        require_serial: true
+        pass_filenames: false
+        # Skip in local pre-commit - runs in Docker CI
+        stages: []
 
   # YAML formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -50,5 +57,4 @@ repos:
     hooks:
       - id: prettier
         types: [yaml]
-        exclude: ^\.github/
-
+        exclude: ^\.github/|^docs/mkdocs\.yml$

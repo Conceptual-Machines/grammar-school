@@ -22,4 +22,3 @@ RUN uv pip install --system -e ".[dev]"
 
 # Default command
 CMD ["pytest"]
-

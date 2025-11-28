@@ -115,4 +115,3 @@ type VerbHandler func(args Args, ctx *Context) ([]Action, *Context, error)
 ```
 
 Verb handlers must match this signature. The Engine uses reflection to automatically discover and register methods with this signature.
-
