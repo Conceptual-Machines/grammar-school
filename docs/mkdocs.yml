@@ -96,6 +96,7 @@ nav:
       - API Reference: go/api-reference.md
   - Examples:
       - Music DSL: examples/music-dsl.md
+      - GPT-5 Integration: examples/gpt-integration.md
       - Building Your DSL: examples/building-dsl.md
   - Specification: specification.md
   - Contributing: contributing.md

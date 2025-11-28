@@ -116,3 +116,27 @@ class LarkBackend:
         tree = self.parser.parse(code)
         result = self.transformer.transform(tree)
         return result  # type: ignore[no-any-return]
+
+    @staticmethod
+    def clean_grammar_for_cfg(grammar: str) -> str:
+        """
+        Clean Lark grammar for use with CFG systems (e.g., GPT-5).
+
+        Removes Lark-specific directives that aren't supported in standard CFG:
+        - %import directives
+        - %ignore directives
+        - Other %-prefixed directives
+
+        Args:
+            grammar: Lark grammar string with directives
+
+        Returns:
+            Cleaned grammar string suitable for CFG systems
+
+        Example:
+            ```python
+            cleaned = LarkBackend.clean_grammar_for_cfg(DEFAULT_GRAMMAR)
+            # Use cleaned grammar with GPT-5 CFG
+            ```
+        """
+        return "\n".join(line for line in grammar.split("\n") if not line.strip().startswith("%"))

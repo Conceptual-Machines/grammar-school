@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pre-commit:
+  pre-commit-python:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +29,23 @@ jobs:
           load: true
           no-cache: false
 
+      - name: Verify git in container
+        run: |
+          docker run --rm pre-commit-python:latest git --version
+
+      - name: Run pre-commit (Python)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-python:latest \
+            sh -c "cd /workspace && git config --global --add safe.directory '*' && uv pip install --system pre-commit && SKIP=golangci-lint,go-vet,go-fmt,prettier pre-commit run --all-files"
+
+  pre-commit-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Go Docker image
         uses: docker/build-push-action@v5
         with:
@@ -39,11 +56,7 @@ jobs:
           cache-to: type=gha,mode=max
           load: true
 
-      - name: Verify git in container
+      - name: Run pre-commit (Go)
         run: |
-          docker run --rm pre-commit-python:latest git --version
-
-      - name: Run pre-commit
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-python:latest \
-            sh -c "cd /workspace && git config --global --add safe.directory '*' && uv pip install --system pre-commit && SKIP=golangci-lint,go-vet,go-fmt,prettier pre-commit run --all-files"
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-go:latest \
+            sh -c "cd /workspace && git config --global --add safe.directory '*' && python3 -m venv /tmp/venv && /tmp/venv/bin/pip install pre-commit && SKIP=ruff,ruff-format,mypy,prettier /tmp/venv/bin/pre-commit run --all-files"

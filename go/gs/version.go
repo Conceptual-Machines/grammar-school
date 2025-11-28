@@ -1,7 +1,7 @@
 package gs
 
 // Version is the semantic version of Grammar School Go implementation.
-const Version = "0.1.0"
+const Version = "0.2.0"
 
 // VersionInfo contains detailed version information.
 var VersionInfo = struct {

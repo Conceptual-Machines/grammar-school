@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 // Engine is the main Grammar School engine that orchestrates parsing, interpretation, and execution.
@@ -247,4 +248,40 @@ func (e *Engine) Execute(ctx context.Context, plan []Action, runtime ...Runtime)
 		}
 	}
 	return nil
+}
+
+// CleanGrammarForCFG cleans a grammar string for use with CFG systems (e.g., GPT-5).
+//
+// Removes parser-specific directives that aren't supported in standard CFG:
+// - Lines starting with % (Lark directives like %import, %ignore)
+// - Empty lines for cleaner output
+// - Other parser-specific meta-directives
+//
+// This is useful when exporting a grammar definition to use as a CFG constraint
+// for LLM tools like GPT-5, which require standard CFG format without parser-specific directives.
+//
+// Args:
+//   - grammar: Grammar string that may contain parser-specific directives
+//
+// Returns:
+//   - Cleaned grammar string suitable for CFG systems
+//
+// Example:
+//
+//	cleaned := gs.CleanGrammarForCFG(grammarString)
+//	// Use cleaned grammar with GPT-5 CFG
+func CleanGrammarForCFG(grammar string) string {
+	lines := strings.Split(grammar, "\n")
+	var cleaned []string
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		// Remove lines starting with % (Lark directives)
+		// Remove empty lines for cleaner output
+		if trimmed != "" && !strings.HasPrefix(trimmed, "%") {
+			cleaned = append(cleaned, line)
+		}
+	}
+
+	return strings.Join(cleaned, "\n")
 }
