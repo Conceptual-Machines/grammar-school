@@ -8,7 +8,7 @@ help: ## Show this help message
 
 # Python targets
 python-install: ## Install Python dependencies
-	cd python && pip install -e ".[dev]"
+	cd python && uv pip install -e ".[dev]"
 
 python-test: ## Run Python tests
 	cd python && pytest
@@ -50,7 +50,7 @@ go-all: go-format-check go-vet go-lint go-test ## Run all Go checks
 
 # Pre-commit
 pre-commit-install: ## Install pre-commit hooks
-	pip install pre-commit
+	uv pip install pre-commit
 	pre-commit install
 
 pre-commit-run: ## Run pre-commit on all files
@@ -73,7 +73,7 @@ all: python-all go-all ## Run all checks for all languages
 
 # Documentation
 docs-install: ## Install documentation dependencies
-	cd python && pip install -e ".[docs]"
+	cd python && uv pip install -e ".[docs]"
 
 docs-serve: ## Serve documentation locally
 	cd docs && mkdocs serve
