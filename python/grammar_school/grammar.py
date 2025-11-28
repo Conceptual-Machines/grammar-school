@@ -111,3 +111,65 @@ class _Optional:
 def optional(expr: Any) -> Any:
     """Create an optional combinator."""
     return _Optional(expr).optional()
+
+
+class Engine:
+    """
+    Single entry point for Grammar School that combines DSL, Grammar, and Runtime.
+
+    This provides a simplified API where you only need to create one object
+    instead of three separate objects (dsl, grammar, runtime).
+
+    Example:
+        ```python
+        from grammar_school import Engine, verb, Action, Runtime
+
+        class MyDSL:
+            @verb
+            def greet(self, name, _context=None):
+                return Action(kind="greet", payload={"name": name})
+
+        class MyRuntime(Runtime):
+            def execute(self, action: Action) -> None:
+                print(f"Hello, {action.payload['name']}!")
+
+        # Single entry point
+        engine = Engine(MyDSL(), MyRuntime())
+        engine.execute('greet(name="World")')
+        ```
+    """
+
+    def __init__(
+        self,
+        dsl_instance: Any,
+        runtime: Runtime,
+        grammar: str = DEFAULT_GRAMMAR,
+    ):
+        """
+        Initialize the Engine with DSL instance, Runtime, and optional grammar.
+
+        Args:
+            dsl_instance: Instance of your DSL class with @verb decorated methods
+            runtime: Runtime instance that executes actions
+            grammar: Optional custom grammar string (defaults to Grammar School's default)
+        """
+        self.dsl = dsl_instance
+        self.runtime = runtime
+        self.grammar = Grammar(dsl_instance, grammar)
+
+    def parse(self, code: str) -> CallChain:
+        """Parse DSL code into a CallChain AST."""
+        return self.grammar.parse(code)
+
+    def compile(self, code: str) -> list[Action]:
+        """Compile DSL code into a list of Actions."""
+        return self.grammar.compile(code)
+
+    def execute(self, code_or_plan: str | list[Action]) -> None:
+        """
+        Execute DSL code or a plan of actions.
+
+        Args:
+            code_or_plan: DSL code string or list of Actions to execute
+        """
+        self.grammar.execute(code_or_plan, self.runtime)
