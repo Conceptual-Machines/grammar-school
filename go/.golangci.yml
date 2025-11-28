@@ -8,8 +8,17 @@ run:
   skip-files:
     - ".*\\.pb\\.go$"
     - ".*\\.gen\\.go$"
+    - "examples/.*\\.go$"
 
 linters-settings:
+  depguard:
+    rules:
+      main:
+        allow:
+          - grammar-school/gs
+        deny:
+          - pkg: "log"
+            desc: "use grammar-school/gs instead"
   errcheck:
     check-type-assertions: true
     check-blank: true
@@ -31,16 +40,10 @@ linters-settings:
       - wrapperFunc
   gocyclo:
     min-complexity: 15
-  goimports:
-    local-prefixes: grammar-school
-  golint:
-    min-confidence: 0
   govet:
     check-shadowing: true
   lll:
     line-length: 120
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
   nolintlint:
@@ -53,42 +56,30 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
-    - depguard
     - dogsled
     - dupl
     - errcheck
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
     - funlen
     - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
-    - golint
-    - gomnd
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - ineffassign
-    - interfacer
     - lll
     - misspell
     - nakedret
     - noctx
     - nolintlint
     - rowserrcheck
-    - scopelint
     - staticcheck
-    - structcheck
-    - stylecheck
     - unconvert
-    - unparam
     - unused
-    - varcheck
     - whitespace
 
 issues:
@@ -99,5 +90,8 @@ issues:
         - gosec
         - funlen
         - gocyclo
+    - path: ^examples/.*\.go$
+      linters:
+        - unparam
   max-issues-per-linter: 0
   max-same-issues: 0
