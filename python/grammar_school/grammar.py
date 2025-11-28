@@ -25,22 +25,22 @@ def rule(
     """
     if grammar is not None:
 
-        def decorator(cls: type[T]) -> type[T]:
+        def decorator_with_grammar(cls: type[T]) -> type[T]:
             if not hasattr(cls, "_grammar_rules"):
-                cls._grammar_rules = {}
-            cls._grammar_rules["_default"] = grammar
+                cls._grammar_rules = {}  # type: ignore[attr-defined]
+            cls._grammar_rules["_default"] = grammar  # type: ignore[attr-defined]
             return cls
 
-        return decorator
+        return decorator_with_grammar
 
-    def decorator(cls: type[T]) -> type[T]:
+    def decorator_with_kwargs(cls: type[T]) -> type[T]:
         if not hasattr(cls, "_grammar_rules"):
-            cls._grammar_rules = {}
+            cls._grammar_rules = {}  # type: ignore[attr-defined]
         for key, value in kwargs.items():
-            cls._grammar_rules[key] = value
+            cls._grammar_rules[key] = value  # type: ignore[attr-defined]
         return cls
 
-    return decorator
+    return decorator_with_kwargs
 
 
 def verb(func: Callable) -> Callable:
@@ -52,7 +52,7 @@ def verb(func: Callable) -> Callable:
         def track(self, name, color=None, _context=None):
             return Action(kind="create_track", payload={...})
     """
-    func._is_verb = True
+    func._is_verb = True  # type: ignore[attr-defined]
     return func
 
 
