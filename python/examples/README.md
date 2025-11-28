@@ -33,6 +33,32 @@ The example demonstrates:
 
 See `gpt_integration_readme.md` for detailed documentation.
 
+## Grammar Builder
+
+Examples showing how to define grammars programmatically or via config files.
+
+```bash
+pip install grammar-school
+python examples/grammar_builder_example.py
+python examples/grammar_config_example.py
+```
+
+The examples demonstrate:
+- **Programmatic grammar definition**: Build grammars using the `GrammarBuilder` API
+- **Config-based grammars**: Define grammars in YAML/TOML files
+- **Method chaining**: Fluent API for building grammars
+- **Human-readable**: Automatic comments and descriptions
+
+```python
+from grammar_school import GrammarBuilder
+
+builder = GrammarBuilder()
+builder.rule("start", "call_chain", "Entry point")
+builder.rule("call_chain", "call (DOT call)*", "Chain of calls")
+builder.terminal("DOT", ".", "Dot separator")
+grammar = MyGrammar(grammar=builder.build())
+```
+
 ## Functional DSL
 
 An example demonstrating functional programming patterns using the `FunctionalMixin`:
