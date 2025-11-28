@@ -1,6 +1,5 @@
 """Tests for functional programming features."""
 
-
 from grammar_school import Action, FunctionalMixin, Grammar, verb
 
 

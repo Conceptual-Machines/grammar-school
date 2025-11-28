@@ -70,3 +70,6 @@ node_modules/
 # Environment variables
 .env
 .env.local
+
+# uv lock file (should be committed for reproducibility, but can be ignored if needed)
+# python/uv.lock

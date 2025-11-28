@@ -74,16 +74,16 @@ func (r *FunctionalRuntime) ExecuteAction(ctx context.Context, a gs.Action) erro
 	return nil
 }
 
-// SimpleParser is a placeholder parser.
-type SimpleParser struct{}
+// FunctionalParser is a placeholder parser.
+type FunctionalParser struct{}
 
-func (p *SimpleParser) Parse(input string) (*gs.CallChain, error) {
+func (p *FunctionalParser) Parse(input string) (*gs.CallChain, error) {
 	return nil, fmt.Errorf("parser not implemented - use a real parser backend")
 }
 
 func main() {
 	dsl := &FunctionalDSL{}
-	parser := &SimpleParser{}
+	parser := &FunctionalParser{}
 	runtime := &FunctionalRuntime{}
 
 	_, err := gs.NewEngine("", dsl, parser, runtime)
