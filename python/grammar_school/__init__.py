@@ -5,6 +5,7 @@ from grammar_school.runtime import Action, Runtime
 from grammar_school.grammar import Grammar, rule, verb
 from grammar_school.interpreter import Interpreter
 from grammar_school.backend_lark import LarkBackend
+from grammar_school.version import __version__
 
 __all__ = [
     "Action",
@@ -16,9 +17,8 @@ __all__ = [
     "LarkBackend",
     "Runtime",
     "Value",
+    "__version__",
     "rule",
     "verb",
 ]
-
-__version__ = "0.1.0"
 

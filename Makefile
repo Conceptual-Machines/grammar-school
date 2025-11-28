@@ -84,6 +84,17 @@ docs-build: ## Build documentation
 docs-deploy: ## Deploy documentation to GitHub Pages
 	cd docs && mkdocs gh-deploy --force
 
+# Version management
+version: ## Show current version
+	@cat VERSION
+
+version-update: ## Update version (usage: make version-update VERSION=0.2.0)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION is required. Usage: make version-update VERSION=0.2.0"; \
+		exit 1; \
+	fi
+	python3 scripts/update_version.py $(VERSION)
+
 clean: ## Clean build artifacts
 	find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -r {} + 2>/dev/null || true
