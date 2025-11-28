@@ -75,13 +75,13 @@ func (p *SimpleParser) Parse(input string) (*gs.CallChain, error) {
 func main() {
 	dsl := &MusicDSL{}
 	parser := &SimpleParser{}
-	engine, err := gs.NewEngine("", dsl, parser)
+	_, err := gs.NewEngine("", dsl, parser)
 	if err != nil {
 		fmt.Printf("Error creating engine: %v\n", err)
 		return
 	}
 
-	runtime := &MusicRuntime{}
+	_ = &MusicRuntime{}
 
 	// Note: This won't work until a real parser is implemented
 	code := `track(name="Drums").add_clip(start=0, length=8)`
