@@ -59,4 +59,4 @@ jobs:
       - name: Run pre-commit (Go)
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-go:latest \
-            sh -c "cd /workspace && git config --global --add safe.directory '*' && uv pip install --system pre-commit && SKIP=ruff,ruff-format,mypy,prettier pre-commit run --all-files"
+            sh -c "cd /workspace && git config --global --add safe.directory '*' && python3 -m venv /tmp/venv && /tmp/venv/bin/pip install pre-commit && SKIP=ruff,ruff-format,mypy,prettier /tmp/venv/bin/pre-commit run --all-files"

@@ -5,12 +5,13 @@ WORKDIR /app
 
 # Install system dependencies
 # Note: git is required for pre-commit hooks
-# Python and pip are required for pre-commit (pre-commit is a Python tool)
+# Python, pip, and venv are required for pre-commit (pre-commit is a Python tool)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     ca-certificates \
     python3 \
     python3-pip \
+    python3-venv \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
