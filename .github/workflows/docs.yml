@@ -44,20 +44,17 @@ jobs:
 
       - name: Build documentation
         run: |
-          cd docs
-          mkdocs build
+          mkdocs build -f docs/mkdocs.yml
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          cd docs
-          mkdocs gh-deploy --force
+          mkdocs gh-deploy -f docs/mkdocs.yml --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build check (PR)
         if: github.event_name == 'pull_request'
         run: |
-          cd docs
-          mkdocs build --strict
+          mkdocs build -f docs/mkdocs.yml --strict
 
