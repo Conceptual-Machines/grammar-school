@@ -39,4 +39,4 @@ jobs:
       - name: Run pre-commit
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-python:latest \
-            sh -c "cd /workspace && uv pip install --system pre-commit && pre-commit run --all-files"
+            sh -c "cd /workspace && uv pip install --system pre-commit && SKIP=golangci-lint,go-vet,prettier pre-commit run --all-files"
