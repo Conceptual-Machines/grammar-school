@@ -1,12 +1,18 @@
 ARG GO_VERSION=1.21
-FROM golang:${GO_VERSION}-alpine
+FROM golang:${GO_VERSION}
 
 WORKDIR /app
 
 # Install system dependencies
 # Note: git is required for pre-commit hooks
-# Python and uv are required for pre-commit (pre-commit is a Python tool)
-RUN apk add --no-cache git ca-certificates python3 py3-pip curl
+# Python and pip are required for pre-commit (pre-commit is a Python tool)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    ca-certificates \
+    python3 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install uv (required for pre-commit)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
