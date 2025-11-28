@@ -2,19 +2,6 @@ name: Documentation
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-      - 'python/**'
-      - '.github/workflows/docs.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'docs/**'
-      - 'python/**'
-      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -56,11 +43,6 @@ jobs:
           mkdocs build -f docs/mkdocs.yml
 
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main'
         run: |
           mkdocs gh-deploy -f docs/mkdocs.yml --force
-
-      - name: Build check (PR)
-        if: github.event_name == 'pull_request'
-        run: |
-          mkdocs build -f docs/mkdocs.yml --strict

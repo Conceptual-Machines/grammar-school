@@ -30,7 +30,18 @@ class Interpreter:
         Walks the call chain, coerce Values to native types,
         dispatch to verb methods, and collect Actions.
         """
-        actions = []
+        return list(self.interpret_stream(call_chain))
+
+    def interpret_stream(self, call_chain: CallChain):
+        """
+        Interpret a CallChain and yield Actions as they're generated (streaming).
+
+        This is a generator that yields actions one at a time, allowing
+        for memory-efficient processing of large DSL programs.
+
+        Yields:
+            Action: Actions as they're generated from verb handlers
+        """
         context = None
 
         for call in call_chain.calls:
@@ -43,20 +54,19 @@ class Interpreter:
             result = handler(**args, _context=context)
 
             if isinstance(result, Action):
-                actions.append(result)
+                yield result
                 context = result
             elif isinstance(result, tuple) and len(result) == 2:
                 action, new_context = result
-                actions.append(action)
+                yield action
                 context = new_context
             elif isinstance(result, list):
-                actions.extend(result)
+                for action in result:
+                    yield action
                 if result:
                     context = result[-1]
             else:
                 raise ValueError(f"Verb handler {call.name} returned invalid result: {result}")
-
-        return actions
 
     def _coerce_args(self, args: dict[str, Value]) -> dict[str, Any]:
         """Coerce Value objects to native Python types."""

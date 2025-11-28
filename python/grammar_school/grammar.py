@@ -57,13 +57,73 @@ def verb(func: Callable) -> Callable:
 
 
 class Grammar:
-    """Grammar implementation using Lark backend."""
+    """
+    Main Grammar class for Grammar School.
 
-    def __init__(self, dsl_instance: Any, grammar: str = DEFAULT_GRAMMAR):
-        """Initialize grammar with DSL instance and optional grammar string."""
-        self.dsl = dsl_instance
+    Subclass this and define @verb methods to create your DSL handlers.
+    Then use parse(), compile(), or execute() to process DSL scripts.
+
+    **The Two-Layer Architecture:**
+
+    1. **@verb methods** (in Grammar subclass):
+       - Transform DSL syntax into Action data structures
+       - Pure functions - no side effects, just return Actions
+       - Example: `track(name="Drums")` → `Action(kind="create_track", payload={...})`
+
+    2. **Runtime** (separate class):
+       - Takes Actions and performs actual side effects
+       - Handles state management, I/O, database operations, etc.
+       - Example: Receives `Action(kind="create_track", ...)` → creates actual track in system
+
+    This separation allows:
+    - Same Grammar to work with different Runtimes (testing vs production)
+    - @verb methods to be testable without side effects
+    - Runtime to manage state independently of Grammar logic
+
+    Example:
+        ```python
+        from grammar_school import Grammar, verb, Action
+
+        class MyGrammar(Grammar):
+            @verb
+            def greet(self, name, _context=None):
+                # Pure function - just returns Action, no side effects
+                return Action(kind="greet", payload={"name": name})
+
+        # Default runtime prints actions - no need to import Runtime!
+        grammar = MyGrammar()
+        grammar.execute('greet(name="World")')
+
+        # Or provide a custom runtime for actual behavior
+        from grammar_school import Runtime
+
+        class MyRuntime(Runtime):
+            def __init__(self):
+                self.greetings = []  # Runtime manages state
+
+            def execute(self, action: Action) -> None:
+                # This is where side effects happen
+                if action.kind == "greet":
+                    name = action.payload["name"]
+                    self.greetings.append(name)
+                    print(f"Hello, {name}!")
+
+        grammar = MyGrammar(runtime=MyRuntime())
+        grammar.execute('greet(name="World")')
+        ```
+    """
+
+    def __init__(self, runtime: Runtime | None = None, grammar: str = DEFAULT_GRAMMAR):
+        """
+        Initialize grammar with runtime and optional custom grammar string.
+
+        Args:
+            runtime: Runtime instance that executes actions (optional, defaults to printing actions)
+            grammar: Optional custom grammar string (defaults to Grammar School's default)
+        """
+        self.runtime = runtime if runtime is not None else _DefaultRuntime()
         self.backend = LarkBackend(grammar)
-        self.interpreter = Interpreter(dsl_instance)
+        self.interpreter = Interpreter(self)
 
     def parse(self, code: str) -> CallChain:
         """Parse DSL code into a CallChain AST."""
@@ -74,8 +134,47 @@ class Grammar:
         call_chain = self.parse(code)
         return self.interpreter.interpret(call_chain)
 
-    def execute(self, code_or_plan: str | list[Action], runtime: Runtime) -> None:
-        """Execute DSL code or a plan of actions using the given runtime."""
+    def stream(self, code: str):
+        """
+        Stream Actions as they're generated from DSL code.
+
+        This is a generator that yields actions one at a time, allowing
+        for memory-efficient processing and real-time execution of large DSL programs.
+
+        Args:
+            code: DSL code string to compile and stream
+
+        Yields:
+            Action: Actions as they're generated from verb handlers
+
+        Example:
+            ```python
+            grammar = MyGrammar()
+            for action in grammar.stream('track(name="A").track(name="B").track(name="C")'):
+                print(f"Got action: {action.kind}")
+                # Process action immediately, don't wait for all actions
+            ```
+        """
+        call_chain = self.parse(code)
+        yield from self.interpreter.interpret_stream(call_chain)
+
+    def execute(self, code_or_plan: str | list[Action], runtime: Runtime | None = None) -> None:
+        """
+        Execute DSL code or a plan of actions using the runtime.
+
+        Args:
+            code_or_plan: DSL code string or list of Actions to execute
+            runtime: Optional runtime instance (uses instance runtime if not provided)
+
+        Raises:
+            ValueError: If no runtime is available (neither instance nor parameter)
+        """
+        if runtime is None:
+            runtime = self.runtime
+
+        if runtime is None:
+            raise ValueError("No runtime provided. Either pass runtime to __init__ or to execute()")
+
         plan = self.compile(code_or_plan) if isinstance(code_or_plan, str) else code_or_plan
 
         for action in plan:
@@ -111,3 +210,19 @@ class _Optional:
 def optional(expr: Any) -> Any:
     """Create an optional combinator."""
     return _Optional(expr).optional()
+
+
+class _DefaultRuntime(Runtime):
+    """
+    Default runtime that prints actions to stdout.
+
+    This is used when no runtime is provided to Grammar.__init__().
+    Output goes to standard output (stdout) - typically the console/terminal.
+
+    For custom output destinations (files, databases, APIs, etc.),
+    create a custom Runtime implementation.
+    """
+
+    def execute(self, action: Action) -> None:
+        """Print action to stdout (standard output/console)."""
+        print(f"Action: {action.kind} with payload: {action.payload}")

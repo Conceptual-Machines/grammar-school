@@ -1,9 +1,7 @@
 name: Pre-commit
 
 on:
-  pull_request:
   push:
-    branches: [main, develop]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
