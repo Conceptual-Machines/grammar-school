@@ -5,7 +5,13 @@ A lightweight framework for building tiny LLM-friendly DSLs in Python.
 ## Installation
 
 ```bash
-pip install -e .
+pip install grammar-school
+```
+
+For development:
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ## Quick Start

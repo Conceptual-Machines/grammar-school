@@ -5,8 +5,7 @@
 A simple example DSL for creating music tracks and clips.
 
 ```bash
-cd python
-pip install -e .
+pip install grammar-school
 python examples/music_dsl.py
 ```
 
@@ -21,8 +20,7 @@ The example demonstrates:
 An example showing how to integrate Grammar School with GPT-5 using Context-Free Grammar (CFG) constraints.
 
 ```bash
-cd python
-pip install -e . openai
+pip install grammar-school openai
 export OPENAI_API_KEY=your-api-key
 python examples/gpt_integration.py
 ```
@@ -40,8 +38,7 @@ See `gpt_integration_readme.md` for detailed documentation.
 An example demonstrating functional programming patterns using the `FunctionalMixin`:
 
 ```bash
-cd python
-pip install -e .
+pip install grammar-school
 python examples/functional_dsl.py
 ```
 
