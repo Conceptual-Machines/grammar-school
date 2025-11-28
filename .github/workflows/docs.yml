@@ -55,8 +55,6 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           uv run mkdocs gh-deploy -f docs/mkdocs.yml --force
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build check (PR)
         if: github.event_name == 'pull_request'
