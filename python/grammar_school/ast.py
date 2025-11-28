@@ -33,4 +33,3 @@ class CallChain:
     """A chain of calls connected by dots (method chaining)."""
 
     calls: list[Call]
-

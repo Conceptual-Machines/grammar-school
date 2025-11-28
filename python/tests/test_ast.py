@@ -74,4 +74,3 @@ class TestCallChain:
         assert len(chain.calls) == 2
         assert chain.calls[0] == call1
         assert chain.calls[1] == call2
-

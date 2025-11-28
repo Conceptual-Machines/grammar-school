@@ -42,17 +42,17 @@ jobs:
 
       - name: Run linting
         run: |
-          docker run --rm -v ${{ github.workspace }}/python:/app/python python-test:${{ matrix.python-version }} \
-            sh -c "ruff check --fix . && ruff format --check ."
+          docker run --rm -v ${{ github.workspace }}/python:/app/python -w /app/python python-test:${{ matrix.python-version }} \
+            sh -c "ruff check . && ruff format --check ."
 
       - name: Run type checking
         run: |
-          docker run --rm -v ${{ github.workspace }}/python:/app/python python-test:${{ matrix.python-version }} \
+          docker run --rm -v ${{ github.workspace }}/python:/app/python -w /app/python python-test:${{ matrix.python-version }} \
             mypy grammar_school || true
 
       - name: Run tests
         run: |
-          docker run --rm -v ${{ github.workspace }}/python:/app/python python-test:${{ matrix.python-version }} \
+          docker run --rm -v ${{ github.workspace }}/python:/app/python -w /app/python python-test:${{ matrix.python-version }} \
             pytest --cov=grammar_school --cov-report=xml --cov-report=term -n auto
 
       - name: Upload coverage

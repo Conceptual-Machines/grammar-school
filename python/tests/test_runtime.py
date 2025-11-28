@@ -37,4 +37,3 @@ class TestRuntime:
         runtime.execute(action)
         assert len(runtime.actions) == 1
         assert runtime.actions[0] == action
-

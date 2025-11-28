@@ -18,4 +18,3 @@ class Runtime(Protocol):
     def execute(self, action: Action) -> None:
         """Execute a single action."""
         ...
-

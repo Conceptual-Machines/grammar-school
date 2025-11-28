@@ -1,6 +1,7 @@
 """Grammar definition system for Grammar School."""
 
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from grammar_school.ast import CallChain
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
@@ -23,20 +24,22 @@ def rule(
     3. @rule(call_chain = sym("call") + many(lit(".") + sym("call")))
     """
     if grammar is not None:
+
         def decorator(cls: type[T]) -> type[T]:
             if not hasattr(cls, "_grammar_rules"):
                 cls._grammar_rules = {}
             cls._grammar_rules["_default"] = grammar
             return cls
+
         return decorator
-    
+
     def decorator(cls: type[T]) -> type[T]:
         if not hasattr(cls, "_grammar_rules"):
             cls._grammar_rules = {}
         for key, value in kwargs.items():
             cls._grammar_rules[key] = value
         return cls
-    
+
     return decorator
 
 
@@ -55,22 +58,22 @@ def verb(func: Callable) -> Callable:
 
 class Grammar:
     """Grammar implementation using Lark backend."""
-    
+
     def __init__(self, dsl_instance: Any, grammar: str = DEFAULT_GRAMMAR):
         """Initialize grammar with DSL instance and optional grammar string."""
         self.dsl = dsl_instance
         self.backend = LarkBackend(grammar)
         self.interpreter = Interpreter(dsl_instance)
-    
+
     def parse(self, code: str) -> CallChain:
         """Parse DSL code into a CallChain AST."""
         return self.backend.parse(code)
-    
+
     def compile(self, code: str) -> list[Action]:
         """Compile DSL code into a list of Actions."""
         call_chain = self.parse(code)
         return self.interpreter.interpret(call_chain)
-    
+
     def execute(self, code_or_plan: str | list[Action], runtime: Runtime) -> None:
         """Execute DSL code or a plan of actions using the given runtime."""
         plan = self.compile(code_or_plan) if isinstance(code_or_plan, str) else code_or_plan
@@ -96,10 +99,10 @@ def many(expr: Any) -> Any:
 
 class _Optional:
     """Helper for optional combinators."""
-    
+
     def __init__(self, expr: Any):
         self.expr = expr
-    
+
     def optional(self) -> Any:
         """Make an expression optional."""
         return {"type": "optional", "expr": self.expr}
@@ -108,4 +111,3 @@ class _Optional:
 def optional(expr: Any) -> Any:
     """Create an optional combinator."""
     return _Optional(expr).optional()
-

@@ -36,22 +36,22 @@ jobs:
 
       - name: Run gofmt
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
             sh -c "if [ \"\$(gofmt -s -l . | wc -l)\" -gt 0 ]; then gofmt -s -d .; exit 1; fi"
 
       - name: Run go vet
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
             go vet ./...
 
       - name: Run golangci-lint
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
             golangci-lint run --timeout=5m
 
       - name: Run tests
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
             go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Upload coverage

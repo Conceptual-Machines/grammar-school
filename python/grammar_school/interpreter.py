@@ -2,18 +2,18 @@
 
 from typing import Any
 
-from grammar_school.ast import Arg, Call, CallChain, Value
+from grammar_school.ast import CallChain, Value
 from grammar_school.runtime import Action
 
 
 class Interpreter:
     """Interprets CallChain AST into Actions."""
-    
+
     def __init__(self, dsl_instance: Any):
         """Initialize interpreter with a DSL instance containing verb handlers."""
         self.dsl = dsl_instance
         self._verb_handlers = self._collect_verbs()
-    
+
     def _collect_verbs(self) -> dict[str, Any]:
         """Collect all methods marked with @verb decorator."""
         verbs = {}
@@ -22,7 +22,7 @@ class Interpreter:
             if callable(attr) and getattr(attr, "_is_verb", False):
                 verbs[name] = attr
         return verbs
-    
+
     def interpret(self, call_chain: CallChain) -> list[Action]:
         """
         Interpret a CallChain into a list of Actions.
@@ -32,16 +32,16 @@ class Interpreter:
         """
         actions = []
         context = None
-        
+
         for call in call_chain.calls:
             if call.name not in self._verb_handlers:
                 raise ValueError(f"Unknown verb: {call.name}")
-            
+
             handler = self._verb_handlers[call.name]
             args = self._coerce_args(call.args)
-            
+
             result = handler(**args, _context=context)
-            
+
             if isinstance(result, Action):
                 actions.append(result)
                 context = result
@@ -55,7 +55,7 @@ class Interpreter:
                     context = result[-1]
             else:
                 raise ValueError(f"Verb handler {call.name} returned invalid result: {result}")
-        
+
         return actions
 
     def _coerce_args(self, args: dict[str, Value]) -> dict[str, Any]:
@@ -64,4 +64,3 @@ class Interpreter:
         for name, value in args.items():
             coerced[name] = value.value
         return coerced
-

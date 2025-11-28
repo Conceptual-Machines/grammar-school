@@ -36,13 +36,8 @@ jobs:
           cache-to: type=gha,mode=max
           load: true
 
-      - name: Install pre-commit in Python container
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace pre-commit-python:latest \
-            sh -c "cd /workspace/python && uv pip install --system pre-commit"
-
       - name: Run pre-commit
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace pre-commit-python:latest \
-            sh -c "cd /workspace && pre-commit run --all-files"
+            sh -c "cd /workspace && uv pip install --system pre-commit && pre-commit run --all-files"
 

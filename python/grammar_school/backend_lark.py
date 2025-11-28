@@ -4,7 +4,6 @@ from lark import Lark, Transformer, v_args
 
 from grammar_school.ast import Arg, Call, CallChain, Value
 
-
 DEFAULT_GRAMMAR = """
 start: call_chain
 
@@ -21,7 +20,7 @@ value: NUMBER
 
 DOT: "."
 COMMA: ","
-NUMBER: /-?\d+(\.\d+)?/
+NUMBER: /-?\\d+(\\.\\d+)?/
 STRING: /"([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*'/
 IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/
 BOOL: "true" | "false"
@@ -34,13 +33,13 @@ BOOL: "true" | "false"
 @v_args(inline=True)
 class ASTTransformer(Transformer):
     """Transforms Lark parse tree into Grammar School AST."""
-    
+
     def start(self, call_chain):
         return call_chain
-    
+
     def call_chain(self, *calls):
         return CallChain(calls=list(calls))
-    
+
     def call(self, name, args=None):
         args_dict = {}
         if args:
@@ -50,20 +49,20 @@ class ASTTransformer(Transformer):
                 else:
                     args_dict["_positional"] = arg
         return Call(name=str(name), args=args_dict)
-    
+
     def args(self, *arg_list):
         return list(arg_list)
-    
+
     def arg(self, *parts):
         if len(parts) == 2:
             name, value = parts
             return Arg(name=str(name), value=value)
         else:
             return parts[0]
-    
+
     def value(self, token):
         token_str = str(token)
-        
+
         if token.type == "NUMBER":
             try:
                 num_val = int(token_str)
@@ -82,14 +81,13 @@ class ASTTransformer(Transformer):
 
 class LarkBackend:
     """Lark-based parser backend."""
-    
+
     def __init__(self, grammar: str = DEFAULT_GRAMMAR):
         """Initialize with a Lark grammar string."""
         self.parser = Lark(grammar, start="start", parser="lalr")
         self.transformer = ASTTransformer()
-    
+
     def parse(self, code: str) -> CallChain:
         """Parse code into a CallChain AST."""
         tree = self.parser.parse(code)
         return self.transformer.transform(tree)
-
