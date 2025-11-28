@@ -1,6 +1,5 @@
 """Tests for AST types."""
 
-import pytest
 from grammar_school.ast import Arg, Call, CallChain, Value
 
 

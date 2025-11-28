@@ -1,6 +1,5 @@
 """Tests for runtime types."""
 
-import pytest
 from grammar_school.runtime import Action, Runtime
 
 
