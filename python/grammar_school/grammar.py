@@ -16,7 +16,7 @@ def rule(
 ) -> Callable[[type[T]], type[T]]:
     """
     Decorator to define grammar rules.
-    
+
     Supports three forms:
     1. @rule("call_chain: call ('.' call)*")
     2. @rule(call_chain="call ('.' call)*")
@@ -43,7 +43,7 @@ def rule(
 def verb(func: Callable) -> Callable:
     """
     Decorator to mark a method as a semantic handler for a verb.
-    
+
     Example:
         @verb
         def track(self, name, color=None, _context=None):
@@ -73,11 +73,8 @@ class Grammar:
     
     def execute(self, code_or_plan: str | list[Action], runtime: Runtime) -> None:
         """Execute DSL code or a plan of actions using the given runtime."""
-        if isinstance(code_or_plan, str):
-            plan = self.compile(code_or_plan)
-        else:
-            plan = code_or_plan
-        
+        plan = self.compile(code_or_plan) if isinstance(code_or_plan, str) else code_or_plan
+
         for action in plan:
             runtime.execute(action)
 

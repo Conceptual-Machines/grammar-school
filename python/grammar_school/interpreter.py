@@ -26,7 +26,7 @@ class Interpreter:
     def interpret(self, call_chain: CallChain) -> list[Action]:
         """
         Interpret a CallChain into a list of Actions.
-        
+
         Walks the call chain, coerce Values to native types,
         dispatch to verb methods, and collect Actions.
         """
