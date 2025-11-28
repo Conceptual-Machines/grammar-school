@@ -1,6 +1,5 @@
 """Functional programming utilities for Grammar School DSLs."""
 
-
 from grammar_school.grammar import verb
 from grammar_school.runtime import Action
 
