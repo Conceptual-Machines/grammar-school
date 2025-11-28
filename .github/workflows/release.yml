@@ -59,14 +59,14 @@ jobs:
       - name: Build Python package
         run: |
           cd python
-          uv pip install build
-          uv run python -m build
+          uv pip install --system build
+          python -m build
 
       - name: Test Python package
         run: |
           cd python
-          uv pip install -e ".[dev]"
-          uv run pytest
+          uv pip install --system -e ".[dev]"
+          pytest
 
       - name: Test Go package
         run: |
