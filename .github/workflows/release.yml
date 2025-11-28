@@ -32,6 +32,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
+          enable-cache: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -59,7 +60,7 @@ jobs:
         run: |
           cd python
           uv pip install build
-          python -m build
+          uv run python -m build
 
       - name: Test Python package
         run: |

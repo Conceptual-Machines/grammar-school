@@ -35,14 +35,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
         with:
           version: "latest"
-
-      - name: Cache uv packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ubuntu-uv-docs-${{ hashFiles('python/pyproject.toml') }}
-          restore-keys: |
-            ubuntu-uv-docs-
+          enable-cache: true
 
       - name: Install dependencies
         working-directory: python
@@ -56,17 +49,17 @@ jobs:
 
       - name: Build documentation
         run: |
-          mkdocs build -f docs/mkdocs.yml
+          uv run mkdocs build -f docs/mkdocs.yml
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          mkdocs gh-deploy -f docs/mkdocs.yml --force
+          uv run mkdocs gh-deploy -f docs/mkdocs.yml --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build check (PR)
         if: github.event_name == 'pull_request'
         run: |
-          mkdocs build -f docs/mkdocs.yml --strict
+          uv run mkdocs build -f docs/mkdocs.yml --strict
 
