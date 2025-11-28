@@ -132,6 +132,38 @@ This is useful for:
 - **Real-time processing**: Start executing actions before compilation completes
 - **Memory efficiency**: Process actions incrementally
 
+## Functional Programming Support
+
+Grammar School supports functional programming paradigms through the `FunctionalMixin`:
+
+```go
+type MyDSL struct {
+    gs.FunctionalMixin
+}
+
+func (d *MyDSL) Square(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+    x := args["x"].Num
+    return []gs.Action{{
+        Kind: "square",
+        Payload: map[string]interface{}{"value": x * x},
+    }}, ctx, nil
+}
+
+// Use functional operations with function references
+// map(@Square, data)
+// filter(@IsEven, data)
+// map(@Square, data).filter(@IsEven, data)
+```
+
+**Available functional operations:**
+- `map(@function, data)` - Map a function over data
+- `filter(@predicate, data)` - Filter data using a predicate
+- `reduce(@function, data, initial)` - Reduce data using a function
+- `compose(@f, @g, @h)` - Compose multiple functions
+- `pipe(data, @f, @g, @h)` - Pipe data through functions
+
+**Function references:** Use `@function_name` syntax to pass functions as arguments. The parser must support parsing `@IDENTIFIER` as a `ValueFunction` kind.
+
 ## Examples
 
 See the `examples/` directory for complete DSL implementations.
@@ -140,7 +172,7 @@ See the `examples/` directory for complete DSL implementations.
 
 ### Core Types
 
-- `Value`: AST value node (number, string, identifier, bool)
+- `Value`: AST value node (number, string, identifier, bool, function)
 - `Arg`: Named argument
 - `Call`: Function call with arguments
 - `CallChain`: Chain of calls (method chaining)
@@ -153,6 +185,10 @@ See the `examples/` directory for complete DSL implementations.
 - `Parser`: Pluggable parser interface (implement with participle, pigeon, etc.)
 - `Runtime`: Interface for executing actions
 - `VerbHandler`: Function signature for verb handlers
+
+### Functional Programming
+
+- `FunctionalMixin`: Embed this struct in your DSL to get `map`, `filter`, `reduce`, `compose`, and `pipe` operations
 
 ### Engine
 

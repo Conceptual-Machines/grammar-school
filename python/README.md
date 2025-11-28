@@ -98,6 +98,38 @@ This is useful for:
 - **Real-time processing**: Start executing actions before compilation completes
 - **Memory efficiency**: Process actions incrementally
 
+## Functional Programming Support
+
+Grammar School supports functional programming paradigms through the `FunctionalMixin`:
+
+```python
+from grammar_school import Grammar, FunctionalMixin, verb, Action
+
+class MyGrammar(Grammar, FunctionalMixin):
+    @verb
+    def square(self, x, _context=None):
+        return Action(kind="square", payload={"value": x * x})
+
+    @verb
+    def is_even(self, x, _context=None):
+        return Action(kind="is_even", payload={"value": x % 2 == 0})
+
+grammar = MyGrammar()
+# Use functional operations with function references
+grammar.execute('map(@square, data)')
+grammar.execute('filter(@is_even, data)')
+grammar.execute('map(@square, data).filter(@is_even, data)')
+```
+
+**Available functional operations:**
+- `map(@function, data)` - Map a function over data
+- `filter(@predicate, data)` - Filter data using a predicate
+- `reduce(@function, data, initial)` - Reduce data using a function
+- `compose(@f, @g, @h)` - Compose multiple functions
+- `pipe(data, @f, @g, @h)` - Pipe data through functions
+
+**Function references:** Use `@function_name` syntax to pass functions as arguments.
+
 ## Examples
 
 See the `examples/` directory for complete DSL implementations.

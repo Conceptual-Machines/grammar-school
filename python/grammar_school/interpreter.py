@@ -69,8 +69,63 @@ class Interpreter:
                 raise ValueError(f"Verb handler {call.name} returned invalid result: {result}")
 
     def _coerce_args(self, args: dict[str, Value]) -> dict[str, Any]:
-        """Coerce Value objects to native Python types."""
+        """
+        Coerce Value objects to native Python types.
+
+        Function references (kind="function") are resolved to actual function handlers
+        if they exist in the verb handlers, otherwise passed as string identifiers.
+
+        Positional arguments are extracted and passed in order as *args.
+        """
         coerced = {}
+        positional_args = []
+
+        # Collect positional arguments in order
+        for name, value in sorted(args.items()):
+            if name.startswith("_positional_"):
+                try:
+                    index = int(name.split("_")[-1])
+                    positional_args.append((index, value))
+                except ValueError:
+                    # Argument name does not match expected '_positional_N' pattern; skip it.
+                    pass
+
+        # Sort by index and extract values
+        positional_values = [v for _, v in sorted(positional_args)]
+
+        # Process all named arguments (non-positional)
         for name, value in args.items():
-            coerced[name] = value.value
+            if name.startswith("_positional_"):
+                continue  # Already handled above
+
+            if value.kind == "function":
+                # Function reference - try to resolve to handler, otherwise pass as string
+                func_name = value.value
+                coerced[name] = self._verb_handlers.get(func_name, func_name)
+            else:
+                coerced[name] = value.value
+
+        # Handle positional arguments - pass as *args if multiple, or single value if one
+        if positional_values:
+            # Coerce each positional value
+            coerced_positionals = []
+            for value in positional_values:
+                if value.kind == "function":
+                    func_name = value.value
+                    if func_name in self._verb_handlers:
+                        coerced_positionals.append(self._verb_handlers[func_name])
+                    else:
+                        coerced_positionals.append(func_name)
+                else:
+                    coerced_positionals.append(value.value)
+
+            # If handler accepts *args, we need to pass them separately
+            # For now, pass as _positional_0, _positional_1, etc. for backward compat
+            # But also support passing as a list if handler expects it
+            if len(coerced_positionals) == 1:
+                coerced["_positional"] = coerced_positionals[0]
+            else:
+                # Multiple positionals - pass as list
+                coerced["_positional"] = coerced_positionals
+
         return coerced

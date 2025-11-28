@@ -2,6 +2,7 @@
 
 from grammar_school.ast import Arg, Call, CallChain, Value
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
+from grammar_school.functional import FunctionalMixin
 from grammar_school.grammar import Grammar, rule, verb
 from grammar_school.interpreter import Interpreter
 from grammar_school.runtime import Action, Runtime
@@ -12,6 +13,8 @@ __all__ = [
     "Arg",
     "Call",
     "CallChain",
+    "DEFAULT_GRAMMAR",
+    "FunctionalMixin",
     "Grammar",
     "Interpreter",
     "LarkBackend",
@@ -20,5 +23,4 @@ __all__ = [
     "__version__",
     "rule",
     "verb",
-    "DEFAULT_GRAMMAR",
 ]

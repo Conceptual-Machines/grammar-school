@@ -34,3 +34,33 @@ The example demonstrates:
 - Building LLM-friendly DSLs with type safety
 
 See `gpt_integration_readme.md` for detailed documentation.
+
+## Functional DSL
+
+An example demonstrating functional programming patterns using the `FunctionalMixin`:
+
+```bash
+cd python
+pip install -e .
+python examples/functional_dsl.py
+```
+
+The example demonstrates:
+- **Function references**: Using `@function_name` syntax to pass functions as arguments
+- **Higher-order functions**: `map`, `filter`, `reduce` operations
+- **Function composition**: `compose` and `pipe` for chaining transformations
+- **Mixin pattern**: Inheriting from `FunctionalMixin` to get functional operations
+
+```python
+from grammar_school import Grammar, FunctionalMixin, verb, Action
+
+class MyGrammar(Grammar, FunctionalMixin):
+    @verb
+    def square(self, x, _context=None):
+        return Action(kind="square", payload={"value": x * x})
+
+grammar = MyGrammar()
+grammar.execute('map(@square, data)')
+grammar.execute('filter(@is_even, data)')
+grammar.execute('map(@square, data).filter(@is_even, data)')
+```

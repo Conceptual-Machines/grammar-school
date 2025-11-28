@@ -62,10 +62,10 @@ func (r *MusicRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
 	return nil
 }
 
-// SimpleParser is a placeholder parser (would need actual implementation).
-type SimpleParser struct{}
+// MusicParser is a placeholder parser (would need actual implementation).
+type MusicParser struct{}
 
-func (p *SimpleParser) Parse(input string) (*gs.CallChain, error) {
+func (p *MusicParser) Parse(input string) (*gs.CallChain, error) {
 	// This is a placeholder - in a real implementation, you'd use
 	// a parser library like participle or pigeon here.
 	// For now, we'll return an error indicating a parser is needed.
@@ -74,7 +74,7 @@ func (p *SimpleParser) Parse(input string) (*gs.CallChain, error) {
 
 func main() {
 	dsl := &MusicDSL{}
-	parser := &SimpleParser{}
+	parser := &MusicParser{}
 	runtime := &MusicRuntime{}
 
 	// Runtime is now stored in Engine (aligned with Python)

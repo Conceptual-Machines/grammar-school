@@ -15,8 +15,12 @@ arg: IDENTIFIER "=" value
 
 value: NUMBER
      | STRING
-     | IDENTIFIER
      | BOOL
+     | IDENTIFIER
+     | function_ref
+
+// Function reference: @function_name syntax
+function_ref: "@" IDENTIFIER
 
 DOT: "."
 COMMA: ","
@@ -38,20 +42,30 @@ class ASTTransformer(Transformer):
         return call_chain
 
     def call_chain(self, *calls):
-        return CallChain(calls=list(calls))
+        # Filter out DOT tokens - only keep Call objects
+        filtered_calls = [
+            call
+            for call in calls
+            if not (hasattr(call, "type") and call.type == "DOT") and isinstance(call, Call)
+        ]
+        return CallChain(calls=filtered_calls)
 
     def call(self, name, args=None):
         args_dict = {}
+        positional_index = 0
         if args:
             for arg in args:
                 if isinstance(arg, Arg):
                     args_dict[arg.name] = arg.value
                 else:
-                    args_dict["_positional"] = arg
+                    # Handle multiple positional arguments
+                    args_dict[f"_positional_{positional_index}"] = arg
+                    positional_index += 1
         return Call(name=str(name), args=args_dict)
 
     def args(self, *arg_list):
-        return list(arg_list)
+        # Filter out comma tokens
+        return [arg for arg in arg_list if not (hasattr(arg, "type") and arg.type == "COMMA")]
 
     def arg(self, *parts):
         if len(parts) == 2:
@@ -60,7 +74,17 @@ class ASTTransformer(Transformer):
         else:
             return parts[0]
 
+    def function_ref(self, identifier):
+        """Handle function reference syntax @function_name."""
+        # Return a Value with kind="function"
+        func_name = str(identifier)
+        return Value(kind="function", value=func_name)
+
     def value(self, token):
+        # Check if token is already a Value (from function_ref transformation)
+        if isinstance(token, Value):
+            return token
+
         token_str = str(token)
 
         if token.type == "NUMBER":

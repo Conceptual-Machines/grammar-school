@@ -8,6 +8,7 @@ const (
 	ValueString
 	ValueIdentifier
 	ValueBool
+	ValueFunction // Function reference (@function_name)
 )
 
 // String returns the string representation of ValueKind.
@@ -21,6 +22,8 @@ func (v ValueKind) String() string {
 		return "identifier"
 	case ValueBool:
 		return "bool"
+	case ValueFunction:
+		return "function"
 	default:
 		return "unknown"
 	}
