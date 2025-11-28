@@ -66,3 +66,7 @@ docs/.cache/
 
 # Node modules (for prettier)
 node_modules/
+
+# Environment variables
+.env
+.env.local
