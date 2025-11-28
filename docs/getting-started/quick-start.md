@@ -7,8 +7,7 @@ Get up and running with Grammar School in minutes.
 === "Python"
 
     ```bash
-    cd python
-    pip install -e ".[dev]"
+    pip install grammar-school
     ```
 
 === "Go"

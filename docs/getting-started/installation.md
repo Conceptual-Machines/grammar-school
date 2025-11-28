@@ -4,25 +4,29 @@ Install Grammar School for your preferred language.
 
 ## Python
 
-### From Source
+### From PyPI (Recommended)
 
 ```bash
-cd python
-pip install -e .
+pip install grammar-school
 ```
 
 ### With Development Dependencies
 
 ```bash
-cd python
-pip install -e ".[dev]"
+pip install grammar-school[dev]
 ```
 
 ### With Documentation Dependencies
 
 ```bash
+pip install grammar-school[docs]
+```
+
+### From Source (Development)
+
+```bash
 cd python
-pip install -e ".[docs]"
+pip install -e ".[dev]"
 ```
 
 ### Requirements

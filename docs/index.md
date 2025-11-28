@@ -86,8 +86,7 @@ All implementations follow the same conceptual design, ensuring consistency acro
 === "Python"
 
     ```bash
-    cd python
-    pip install -e .
+    pip install grammar-school
     ```
 
 === "Go"
