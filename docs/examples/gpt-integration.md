@@ -67,36 +67,43 @@ class TaskRuntime(Runtime):
 grammar = TaskGrammar(runtime=TaskRuntime())
 
 # Get grammar definition for CFG
-from grammar_school.backend_lark import DEFAULT_GRAMMAR
+from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 
 # Clean up grammar for GPT-5 CFG (remove unsupported directives)
-cleaned_grammar = "\n".join(
-    line for line in DEFAULT_GRAMMAR.split("\n")
-    if not line.strip().startswith("%")
+cleaned_grammar = LarkBackend.clean_grammar_for_cfg(DEFAULT_GRAMMAR)
+
+# Note: The OpenAI Python SDK does not currently support direct grammar constraints
+# or custom tools with CFG as shown below. This example demonstrates a hypothetical
+# future API for GPT-5. For now, you can instruct the model via the system prompt
+# to output code conforming to your DSL grammar.
+
+client = OpenAI()
+
+# Current approach: Use system prompt to guide model output
+response = client.chat.completions.create(
+    model="gpt-4",  # Use the latest available model; replace with "gpt-5" when available
+    messages=[
+        {
+            "role": "system",
+            "content": (
+                "You are an expert code generator. "
+                "Generate code in the following DSL, which is defined by this Lark grammar:\n"
+                f"{cleaned_grammar}\n"
+                "Only output valid DSL code, and nothing else."
+            ),
+        },
+        {
+            "role": "user",
+            "content": "Create a task called 'Write docs' with high priority",
+        },
+    ],
 )
 
-# Call GPT-5 with CFG constraint
-client = OpenAI()
-response = client.responses.create(
-    model="gpt-5",
-    input="Create a task called 'Write docs' with high priority",
-    tools=[{
-        "type": "custom",
-        "name": "task_dsl",
-        "description": "Executes task management operations using Grammar School DSL.",
-        "format": {
-            "type": "grammar",
-            "syntax": "lark",
-            "definition": cleaned_grammar,
-        },
-    }],
-)
+# Extract the generated DSL code from the response
+dsl_code = response.choices[0].message.content.strip()
 
 # Execute the generated DSL code
-for item in response.output:
-    if hasattr(item, "type") and item.type == "custom_tool_call":
-        dsl_code = item.input
-        grammar.execute(dsl_code)
+grammar.execute(dsl_code)
 ```
 
 ## Benefits
@@ -174,5 +181,15 @@ except Exception as e:
 ## See Also
 
 - [Grammar School Documentation](../index.md)
-- [GPT-5 CFG Documentation](https://platform.openai.com/docs/guides/function-calling)
+- [OpenAI Function Calling Guide](https://platform.openai.com/docs/guides/function-calling) - Current OpenAI API for function calling
 - [Lark Parser Documentation](https://lark-parser.readthedocs.io/)
+
+## Note on GPT-5 API
+
+The examples in this documentation reference a hypothetical GPT-5 API with direct CFG support. As of now, the OpenAI API does not support grammar constraints or custom tools with CFG definitions. The current approach is to:
+
+1. Use the grammar definition in the system prompt to guide the model
+2. Parse and validate the generated code using Grammar School
+3. Provide feedback to the model if the code doesn't conform to the grammar
+
+When GPT-5 or similar APIs with CFG support become available, you can use the `LarkBackend.clean_grammar_for_cfg()` method to prepare your grammar for use with those APIs.
