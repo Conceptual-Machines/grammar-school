@@ -87,6 +87,7 @@ class Interpreter:
                     index = int(name.split("_")[-1])
                     positional_args.append((index, value))
                 except ValueError:
+                    # Argument name does not match expected '_positional_N' pattern; skip it.
                     pass
 
         # Sort by index and extract values

@@ -15,8 +15,8 @@ arg: IDENTIFIER "=" value
 
 value: NUMBER
      | STRING
-     | IDENTIFIER
      | BOOL
+     | IDENTIFIER
      | function_ref
 
 // Function reference: @function_name syntax
@@ -84,12 +84,6 @@ class ASTTransformer(Transformer):
         # Check if token is already a Value (from function_ref transformation)
         if isinstance(token, Value):
             return token
-
-        # Handle function references (when token is a tree with function_ref)
-        if hasattr(token, "data") and token.data == "function_ref":
-            # Extract identifier from function_ref
-            func_name = str(token.children[0]) if token.children else str(token)
-            return Value(kind="function", value=func_name)
 
         token_str = str(token)
 

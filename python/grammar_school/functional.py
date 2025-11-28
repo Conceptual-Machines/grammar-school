@@ -1,6 +1,5 @@
 """Functional programming utilities for Grammar School DSLs."""
 
-from typing import Any
 
 from grammar_school.grammar import verb
 from grammar_school.runtime import Action
@@ -24,15 +23,6 @@ class FunctionalMixin:
         ```
     """
 
-    @staticmethod
-    def _resolve_function(func: Any, verb_handlers: dict[str, Any]) -> Any:
-        """Resolve a function reference to a callable."""
-        if callable(func):
-            return func
-        if isinstance(func, str) and func in verb_handlers:
-            return verb_handlers[func]
-        return func
-
     @verb
     def map(self, _positional=None, _context=None):
         """
@@ -51,13 +41,6 @@ class FunctionalMixin:
             func, data = _positional[0], _positional[1]
         else:
             func, data = _positional, None
-
-        # Resolve function reference if needed
-        verb_handlers = getattr(self, "_verb_handlers", {})
-        if hasattr(self, "_collect_verbs"):
-            verb_handlers = (
-                self._collect_verbs() if not hasattr(self, "_verb_handlers") else verb_handlers
-            )
 
         func_name = func.__name__ if callable(func) else func
         return Action(kind="map", payload={"func": func_name, "data": data, "_func_ref": func})

@@ -54,19 +54,34 @@ type FunctionalRuntime struct{}
 func (r *FunctionalRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
 	switch a.Kind {
 	case "map":
-		funcName := a.Payload["func"].(string)
+		funcName, ok := a.Payload["func"].(string)
+		if !ok {
+			return fmt.Errorf("invalid type for 'func' in map action: expected string")
+		}
 		fmt.Printf("Map %s over data\n", funcName)
 	case "filter":
-		predicate := a.Payload["predicate"].(string)
+		predicate, ok := a.Payload["predicate"].(string)
+		if !ok {
+			return fmt.Errorf("invalid type for 'predicate' in filter action: expected string")
+		}
 		fmt.Printf("Filter data using %s\n", predicate)
 	case "reduce":
-		funcName := a.Payload["func"].(string)
+		funcName, ok := a.Payload["func"].(string)
+		if !ok {
+			return fmt.Errorf("invalid type for 'func' in reduce action: expected string")
+		}
 		fmt.Printf("Reduce data using %s\n", funcName)
 	case "compose":
-		funcs := a.Payload["functions"].([]string)
+		funcs, ok := a.Payload["functions"].([]string)
+		if !ok {
+			return fmt.Errorf("invalid type for 'functions' in compose action: expected []string")
+		}
 		fmt.Printf("Compose functions: %v\n", funcs)
 	case "pipe":
-		funcs := a.Payload["functions"].([]string)
+		funcs, ok := a.Payload["functions"].([]string)
+		if !ok {
+			return fmt.Errorf("invalid type for 'functions' in pipe action: expected []string")
+		}
 		fmt.Printf("Pipe data through: %v\n", funcs)
 	default:
 		fmt.Printf("Action: %s with payload: %v\n", a.Kind, a.Payload)

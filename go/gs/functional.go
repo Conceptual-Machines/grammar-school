@@ -30,10 +30,6 @@ func (f *FunctionalMixin) Map(args Args, ctx *Context) ([]Action, *Context, erro
 	data := args["_positional_1"]
 
 	funcName := funcRef.Str
-	if funcRef.Kind != ValueFunction {
-		// Fallback to identifier if not a function reference
-		funcName = funcRef.Str
-	}
 
 	action := Action{
 		Kind: "map",
@@ -53,9 +49,6 @@ func (f *FunctionalMixin) Filter(args Args, ctx *Context) ([]Action, *Context, e
 	data := args["_positional_1"]
 
 	predName := predicate.Str
-	if predicate.Kind != ValueFunction {
-		predName = predicate.Str
-	}
 
 	action := Action{
 		Kind: "filter",
@@ -76,9 +69,6 @@ func (f *FunctionalMixin) Reduce(args Args, ctx *Context) ([]Action, *Context, e
 	initial, hasInitial := args["_positional_2"]
 
 	funcName := funcRef.Str
-	if funcRef.Kind != ValueFunction {
-		funcName = funcRef.Str
-	}
 
 	payload := map[string]interface{}{
 		"func": funcName,

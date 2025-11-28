@@ -307,7 +307,8 @@ class TestFunctionalIntegration:
         """Test functional operations with custom runtime."""
 
         class TestRuntime:
-            executed_actions = []
+            def __init__(self):
+                self.executed_actions = []
 
             def execute(self, action: Action) -> None:
                 self.executed_actions.append(action)
