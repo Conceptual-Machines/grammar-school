@@ -21,6 +21,14 @@ wheels/
 venv/
 env/
 ENV/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+.hypothesis/
 
 # Go
 *.exe
@@ -31,6 +39,8 @@ ENV/
 *.test
 *.out
 go.work
+coverage.out
+coverage.html
 
 # IDE
 .vscode/
@@ -42,4 +52,8 @@ go.work
 # OS
 .DS_Store
 Thumbs.db
+
+# Test and coverage
+.mypy_cache/
+.ruff_cache/
 

@@ -10,6 +10,22 @@ const (
 	ValueBool
 )
 
+// String returns the string representation of ValueKind.
+func (v ValueKind) String() string {
+	switch v {
+	case ValueNumber:
+		return "number"
+	case ValueString:
+		return "string"
+	case ValueIdentifier:
+		return "identifier"
+	case ValueBool:
+		return "bool"
+	default:
+		return "unknown"
+	}
+}
+
 // Value represents a value in the AST (number, string, identifier, etc.).
 type Value struct {
 	Kind ValueKind
