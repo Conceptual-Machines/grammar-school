@@ -1,4 +1,5 @@
-FROM golang:1.21-alpine
+ARG GO_VERSION=1.21
+FROM golang:${GO_VERSION}-alpine
 
 WORKDIR /app
 

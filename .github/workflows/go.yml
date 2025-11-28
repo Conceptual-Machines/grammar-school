@@ -14,6 +14,10 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ['1.21', '1.22']
 
     steps:
       - uses: actions/checkout@v4
@@ -26,29 +30,31 @@ jobs:
         with:
           context: .
           file: ./docker/go/Dockerfile
-          tags: go-test:latest
+          build-args: |
+            GO_VERSION=${{ matrix.go-version }}
+          tags: go-test:${{ matrix.go-version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
 
       - name: Run gofmt
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:${{ matrix.go-version }} \
             sh -c "if [ \"\$(gofmt -s -l . | wc -l)\" -gt 0 ]; then gofmt -s -d .; exit 1; fi"
 
       - name: Run go vet
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:${{ matrix.go-version }} \
             go vet ./...
 
       - name: Run golangci-lint
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:${{ matrix.go-version }} \
             golangci-lint run --timeout=5m
 
       - name: Run tests
         run: |
-          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:latest \
+          docker run --rm -v ${{ github.workspace }}/go:/app/go -w /app/go go-test:${{ matrix.go-version }} \
             go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Upload coverage
@@ -56,5 +62,5 @@ jobs:
         with:
           file: ./go/coverage.out
           flags: go
-          name: go-coverage
+          name: go-coverage-${{ matrix.go-version }}
           fail_ci_if_error: false
