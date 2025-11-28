@@ -71,6 +71,19 @@ type-check: python-type-check ## Run type checkers
 
 all: python-all go-all ## Run all checks for all languages
 
+# Documentation
+docs-install: ## Install documentation dependencies
+	cd python && pip install -e ".[docs]"
+
+docs-serve: ## Serve documentation locally
+	cd docs && mkdocs serve
+
+docs-build: ## Build documentation
+	cd docs && mkdocs build
+
+docs-deploy: ## Deploy documentation to GitHub Pages
+	cd docs && mkdocs gh-deploy --force
+
 clean: ## Clean build artifacts
 	find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -r {} + 2>/dev/null || true

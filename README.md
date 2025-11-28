@@ -7,7 +7,7 @@ Grammar School is a lightweight, multi-language framework for creating small, pr
 - A way to **define grammar rules** (via strings or structured combinators)
 - A way to **map DSL verbs to semantic handlers**
 - A **parser → AST → interpreter → actions → runtime** pipeline
-- Independent implementations in **Python** and **Go** (and potentially TypeScript)
+- Independent implementations in **Python** and **Go** (and soon TypeScript)
 
 ## Quick Start
 
@@ -57,5 +57,5 @@ See [SPEC.md](./SPEC.md) for the complete specification.
 
 ## License
 
-TBD
+MIT License - see [LICENSE](LICENSE) file for details.
 

@@ -1,0 +1,103 @@
+site_name: Grammar School
+site_description: A multi-language framework for building tiny LLM-friendly DSLs
+site_author: Conceptual Machines
+site_url: https://conceptual-machines.github.io/grammar-school/
+
+repo_name: Conceptual-Machines/grammar-school
+repo_url: https://github.com/Conceptual-Machines/grammar-school
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../python]
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_root_full_path: false
+            show_object_full_path: false
+            show_category_heading: true
+            show_if_no_docstring: true
+            show_signature_annotations: true
+            separate_signature: true
+            line_length: 100
+            merge_init_into_class: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quick-start.md
+    - Installation: getting-started/installation.md
+    - Concepts: getting-started/concepts.md
+  - Python API:
+    - Overview: python/overview.md
+    - Core Types: python/core-types.md
+    - Grammar: python/grammar.md
+    - Interpreter: python/interpreter.md
+    - Runtime: python/runtime.md
+    - API Reference: python/api-reference.md
+  - Go API:
+    - Overview: go/overview.md
+    - Core Types: go/core-types.md
+    - Engine: go/engine.md
+    - Runtime: go/runtime.md
+    - API Reference: go/api-reference.md
+  - Examples:
+    - Music DSL: examples/music-dsl.md
+    - Building Your DSL: examples/building-dsl.md
+  - Specification: specification.md
+  - Contributing: contributing.md
+
+extra:
+  version:
+    provider: mike
+

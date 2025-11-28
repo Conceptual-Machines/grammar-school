@@ -375,5 +375,9 @@ Each implementation stands on its own.
 
 ## 9. License / Maintainers
 
-Not specified yet. Add once project setup is done.
+**License**: MIT License
+
+Copyright (c) 2024 Conceptual Machines
+
+See [LICENSE](../LICENSE) file for full license text.
 
