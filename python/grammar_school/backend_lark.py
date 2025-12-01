@@ -3,6 +3,7 @@
 from lark import Lark, Transformer, v_args
 
 from grammar_school.ast import Arg, Call, CallChain, Value
+from grammar_school.smart_transformer import SmartTransformer
 
 DEFAULT_GRAMMAR = """
 start: call_chain
@@ -106,16 +107,59 @@ class ASTTransformer(Transformer):
 class LarkBackend:
     """Lark-based parser backend."""
 
-    def __init__(self, grammar: str = DEFAULT_GRAMMAR):
-        """Initialize with a Lark grammar string."""
+    def __init__(
+        self,
+        grammar: str = DEFAULT_GRAMMAR,
+        transformer: Transformer | None = None,
+        use_smart_transformer: bool = True,
+    ):
+        """
+        Initialize with a Lark grammar string.
+
+        Args:
+            grammar: Lark grammar string
+            transformer: Optional custom transformer (if None, uses SmartTransformer or ASTTransformer)
+            use_smart_transformer: If True, use SmartTransformer (adapts to any grammar).
+                                 If False, use ASTTransformer (coupled to default grammar).
+        """
         self.parser = Lark(grammar, start="start", parser="lalr")
-        self.transformer = ASTTransformer()
+        if transformer is not None:
+            self.transformer = transformer
+        elif use_smart_transformer:
+            # SmartTransformer works with any grammar, including the default
+            self.transformer = SmartTransformer()
+        else:
+            # ASTTransformer is faster for default grammar (backward compatibility)
+            self.transformer = ASTTransformer()
 
     def parse(self, code: str) -> CallChain:
         """Parse code into a CallChain AST."""
         tree = self.parser.parse(code)
         result = self.transformer.transform(tree)
-        return result  # type: ignore[no-any-return]
+        # Handle case where transformer returns a list (unwrap it)
+        if isinstance(result, list):
+            if result and isinstance(result[0], CallChain):
+                return result[0]
+            # If list contains Calls, create a CallChain using iterator
+            from grammar_school.ast import Call
+
+            # Use generator expression instead of list comprehension for memory efficiency
+            calls_iter = (item for item in result if isinstance(item, Call))
+            calls = list(calls_iter)  # Convert to list for CallChain
+            if calls:
+                return CallChain(calls=calls)
+            # Empty list - return empty CallChain
+            return CallChain(calls=[])
+        # Result should be a CallChain
+        if isinstance(result, CallChain):
+            return result
+        # If it's a single Call, wrap it
+        from grammar_school.ast import Call
+
+        if isinstance(result, Call):
+            return CallChain(calls=[result])
+        # Fallback: return empty CallChain
+        return CallChain(calls=[])  # type: ignore[no-any-return]
 
     @staticmethod
     def clean_grammar_for_cfg(grammar: str) -> str:

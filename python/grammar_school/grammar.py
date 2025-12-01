@@ -5,6 +5,7 @@ from typing import Any, TypeVar
 
 from grammar_school.ast import CallChain
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
+from grammar_school.grammar_builder import GrammarBuilder
 from grammar_school.interpreter import Interpreter
 from grammar_school.runtime import Action, Runtime
 
@@ -113,15 +114,41 @@ class Grammar:
         ```
     """
 
-    def __init__(self, runtime: Runtime | None = None, grammar: str = DEFAULT_GRAMMAR):
+    def __init__(
+        self,
+        runtime: Runtime | None = None,
+        grammar: str | GrammarBuilder = DEFAULT_GRAMMAR,
+    ):
         """
-        Initialize grammar with runtime and optional custom grammar string.
+        Initialize grammar with runtime and optional custom grammar.
 
         Args:
             runtime: Runtime instance that executes actions (optional, defaults to printing actions)
-            grammar: Optional custom grammar string (defaults to Grammar School's default)
+            grammar: Optional custom grammar string or GrammarBuilder instance
+                    (defaults to Grammar School's default)
+
+        Example:
+            ```python
+            # Using string
+            grammar = MyGrammar(grammar="start: call_chain\ncall_chain: call (DOT call)*")
+
+            # Using GrammarBuilder
+            from grammar_school import GrammarBuilder
+            builder = GrammarBuilder.default()
+            grammar = MyGrammar(grammar=builder)
+
+            # Using custom GrammarBuilder
+            builder = GrammarBuilder()
+            builder.rule("start", "statement*")
+            grammar = MyGrammar(grammar=builder)
+            ```
         """
         self.runtime = runtime if runtime is not None else _DefaultRuntime()
+
+        # Convert GrammarBuilder to string if needed
+        if isinstance(grammar, GrammarBuilder):
+            grammar = grammar.build()
+
         self.backend = LarkBackend(grammar)
         self.interpreter = Interpreter(self)
 
