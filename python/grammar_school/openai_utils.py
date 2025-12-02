@@ -104,4 +104,3 @@ def get_openai_text_format_for_cfg() -> dict[str, Any]:
             "type": "text",
         },
     }
-
