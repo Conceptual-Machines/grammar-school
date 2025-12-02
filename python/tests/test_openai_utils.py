@@ -91,7 +91,7 @@ track: "track"
         assert "%import" not in cleaned_grammar
         # Verify the actual grammar content is still there
         assert "start: track" in cleaned_grammar
-        assert "track: \"track\"" in cleaned_grammar
+        assert 'track: "track"' in cleaned_grammar
 
         # Verify it matches what clean_grammar_for_cfg would produce
         expected_cleaned = LarkBackend.clean_grammar_for_cfg(grammar_with_directives)
@@ -126,7 +126,7 @@ track: "track"
         config = CFGConfig(
             tool_name="custom_tool",
             description="Custom description with special chars: !@#$",
-            grammar="start: custom_rule\ncustom_rule: \"value\"",
+            grammar='start: custom_rule\ncustom_rule: "value"',
             syntax="lark",
         )
 
