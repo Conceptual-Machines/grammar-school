@@ -43,17 +43,6 @@ class TaskGrammar(Grammar):
         for name, task in self.tasks.items():
             status = "✓" if task["completed"] else "○"
             print(f"  {status} {name} (priority: {task['priority']})")
-            else:
-                print(f"✗ Task not found: {name}")
-
-        elif action.kind == "list_tasks":
-            if not self.tasks:
-                print("No tasks found.")
-            else:
-                print("\nTasks:")
-                for name, task in self.tasks.items():
-                    status = "✓" if task["completed"] else "○"
-                    print(f"  {status} {name} (priority: {task['priority']})")
 
 
 def get_grammar_definition() -> str:

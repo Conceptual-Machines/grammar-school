@@ -1,6 +1,10 @@
 """Tests for functional programming features."""
 
-from grammar_school import Action, FunctionalMixin, Grammar, verb
+from grammar_school import FunctionalMixin, Grammar, method
+from grammar_school.runtime import Action
+
+# For backward compatibility in tests - will be updated later
+verb = method  # type: ignore[misc]
 
 
 class TestFunctionalMixin:
@@ -310,7 +314,7 @@ class TestFunctionalIntegration:
             def __init__(self):
                 self.executed_actions = []
 
-            def execute(self, action: Action) -> None:
+            def execute(self, action) -> None:  # type: ignore[type-arg]
                 self.executed_actions.append(action)
 
         class TestGrammar(Grammar, FunctionalMixin):

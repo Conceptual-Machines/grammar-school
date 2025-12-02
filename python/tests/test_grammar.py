@@ -1,6 +1,10 @@
 """Tests for Grammar class."""
 
-from grammar_school import Action, Grammar, Runtime, verb
+from grammar_school import Grammar, method
+from grammar_school.runtime import Action, Runtime
+
+# For backward compatibility in tests - will be updated later
+verb = method  # type: ignore[misc]
 
 
 class TestGrammar:

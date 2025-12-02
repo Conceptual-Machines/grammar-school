@@ -97,7 +97,7 @@ Methods execute directly when called - no Runtime needed:
         def track(self, name):
             # Implementation runs directly
             print(f"Created track: {name}")
-    
+
     dsl = MusicDSL()
     dsl.execute('track(name="Drums")')  # Prints: Created track: Drums
     ```
@@ -168,7 +168,7 @@ Grammars define the syntax of your DSL. Grammar School provides a default gramma
         @method
         def greet(self, name):
             print(f"Hello, {name}!")
-    
+
     dsl = MyDSL(grammar=custom_grammar)
     ```
 

@@ -9,7 +9,7 @@ from grammar_school.cfg_vendor import (
     OpenAICFGVendor,  # Backward compatibility
 )
 from grammar_school.functional import FunctionalMixin
-from grammar_school.grammar import Grammar, method, rule, verb
+from grammar_school.grammar import Grammar, method, rule
 from grammar_school.grammar_builder import GrammarBuilder
 from grammar_school.grammar_config import (
     load_grammar_from_config,

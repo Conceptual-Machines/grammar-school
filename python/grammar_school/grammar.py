@@ -1,14 +1,18 @@
 """Grammar definition system for Grammar School."""
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, TypeVar
 
 from grammar_school.ast import CallChain
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 from grammar_school.grammar_builder import GrammarBuilder
-from grammar_school.grammar_config import load_grammar_from_config, load_grammar_from_toml, load_grammar_from_yaml
+from grammar_school.grammar_config import (
+    load_grammar_from_config,
+    load_grammar_from_toml,
+    load_grammar_from_yaml,
+)
 from grammar_school.interpreter import Interpreter
-from grammar_school.runtime import Action, Runtime
 
 T = TypeVar("T")
 
@@ -143,7 +147,7 @@ class Grammar:
                 @method
                 def greet(self, name):
                     print(f"Hello, {name}!")
-            
+
             dsl = MyDSL()  # No runtime needed
             dsl.execute('greet(name="World")')
 
@@ -183,7 +187,11 @@ class Grammar:
         elif isinstance(grammar, dict):
             # Config dict - load it
             grammar_str = load_grammar_from_config(grammar)
-        elif isinstance(grammar, (str, Path)) and (str(grammar).endswith('.yaml') or str(grammar).endswith('.yml') or str(grammar).endswith('.toml')):
+        elif isinstance(grammar, str | Path) and (
+            str(grammar).endswith(".yaml")
+            or str(grammar).endswith(".yml")
+            or str(grammar).endswith(".toml")
+        ):
             # Path to config file
             grammar_str = self._load_grammar_from_file(grammar)
         elif isinstance(grammar, GrammarBuilder):
@@ -191,7 +199,7 @@ class Grammar:
             grammar_str = grammar.build()
         else:
             # String (Lark grammar definition)
-            grammar_str = grammar
+            grammar_str = str(grammar)
 
         self.backend = LarkBackend(grammar_str)
         self.interpreter = Interpreter(self)
@@ -199,12 +207,14 @@ class Grammar:
     def _load_grammar_from_file(self, path: str | Path) -> str:
         """Load grammar from YAML or TOML config file."""
         path = Path(path)
-        if path.suffix in ('.yaml', '.yml'):
+        if path.suffix in (".yaml", ".yml"):
             return load_grammar_from_yaml(path)
-        elif path.suffix == '.toml':
+        elif path.suffix == ".toml":
             return load_grammar_from_toml(path)
         else:
-            raise ValueError(f"Unsupported grammar config file format: {path.suffix}. Use .yaml, .yml, or .toml")
+            raise ValueError(
+                f"Unsupported grammar config file format: {path.suffix}. Use .yaml, .yml, or .toml"
+            )
 
     def parse(self, code: str) -> CallChain:
         """Parse DSL code into a CallChain AST."""
@@ -260,7 +270,7 @@ class Grammar:
                 @method
                 def greet(self, name):
                     print(f"Hello, {name}!")
-            
+
             dsl = MyDSL()
             dsl.execute('greet(name="World")')  # Prints: Hello, World!
             ```
@@ -300,5 +310,3 @@ class _Optional:
 def optional(expr: Any) -> Any:
     """Create an optional combinator."""
     return _Optional(expr).optional()
-
-

@@ -188,7 +188,6 @@ func (e *Engine) interpretStream(ctx context.Context, callChain *CallChain) erro
 	return nil
 }
 
-
 // CleanGrammarForCFG cleans a grammar string for use with CFG systems (e.g., GPT-5).
 //
 // Removes parser-specific directives that aren't supported in standard CFG:
