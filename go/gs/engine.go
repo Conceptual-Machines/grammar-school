@@ -286,6 +286,15 @@ func CleanGrammarForCFG(grammar string) string {
 	return strings.Join(cleaned, "\n")
 }
 
+const (
+	// SyntaxLark is the default syntax for CFG grammars
+	SyntaxLark = "lark"
+	// SyntaxRegex is the regex syntax for CFG grammars
+	SyntaxRegex = "regex"
+	// TextFormatType is the text format type for OpenAI CFG requests
+	TextFormatType = "text"
+)
+
 // CFGConfig contains configuration for building an OpenAI CFG tool.
 type CFGConfig struct {
 	ToolName    string // Name of the tool that will receive the DSL output
@@ -323,7 +332,7 @@ func BuildOpenAICFGTool(config CFGConfig) map[string]any {
 	// Default to "lark" if syntax is not specified
 	syntax := config.Syntax
 	if syntax == "" {
-		syntax = "lark"
+		syntax = SyntaxLark
 	}
 
 	// Build the OpenAI CFG tool structure
@@ -354,7 +363,7 @@ func BuildOpenAICFGTool(config CFGConfig) map[string]any {
 func GetOpenAITextFormatForCFG() map[string]any {
 	return map[string]any{
 		"format": map[string]any{
-			"type": "text",
+			"type": TextFormatType,
 		},
 	}
 }

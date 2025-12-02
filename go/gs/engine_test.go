@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+//nolint:funlen // Test function is long but readable with table-driven tests
 func TestBuildOpenAICFGTool(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -18,7 +19,7 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 				ToolName:    "magda_dsl",
 				Description: "Generates MAGDA DSL code",
 				Grammar:     "start: track",
-				Syntax:      "lark",
+				Syntax:      SyntaxLark,
 			},
 			validate: func(t *testing.T, tool map[string]any) {
 				if tool["type"] != "custom" {
@@ -38,7 +39,7 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 				if format["type"] != "grammar" {
 					t.Errorf("expected format.type 'grammar', got %v", format["type"])
 				}
-				if format["syntax"] != "lark" {
+				if format["syntax"] != SyntaxLark {
 					t.Errorf("expected format.syntax 'lark', got %v", format["syntax"])
 				}
 				if _, ok := format["definition"].(string); !ok {
@@ -52,7 +53,7 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 				ToolName:    "test_tool",
 				Description: "Test tool",
 				Grammar:     "%import common\nstart: track\ntrack: \"track\"\n",
-				Syntax:      "lark",
+				Syntax:      SyntaxLark,
 			},
 			validate: func(t *testing.T, tool map[string]any) {
 				format := tool["format"].(map[string]any)
@@ -88,7 +89,7 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 			},
 			validate: func(t *testing.T, tool map[string]any) {
 				format := tool["format"].(map[string]any)
-				if format["syntax"] != "lark" {
+				if format["syntax"] != SyntaxLark {
 					t.Errorf("expected syntax to default to 'lark', got %v", format["syntax"])
 				}
 			},
@@ -99,11 +100,11 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 				ToolName:    "test_tool",
 				Description: "Test tool",
 				Grammar:     "^\\d+$",
-				Syntax:      "regex",
+				Syntax:      SyntaxRegex,
 			},
 			validate: func(t *testing.T, tool map[string]any) {
 				format := tool["format"].(map[string]any)
-				if format["syntax"] != "regex" {
+				if format["syntax"] != SyntaxRegex {
 					t.Errorf("expected syntax 'regex', got %v", format["syntax"])
 				}
 			},
@@ -114,7 +115,7 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 				ToolName:    "custom_tool",
 				Description: "Custom description with special chars: !@#$",
 				Grammar:     "start: custom_rule\ncustom_rule: \"value\"",
-				Syntax:      "lark",
+				Syntax:      SyntaxLark,
 			},
 			validate: func(t *testing.T, tool map[string]any) {
 				if tool["name"] != "custom_tool" {
@@ -124,7 +125,7 @@ func TestBuildOpenAICFGTool(t *testing.T) {
 					t.Errorf("expected description with special chars, got %v", tool["description"])
 				}
 				format := tool["format"].(map[string]any)
-				if format["syntax"] != "lark" {
+				if format["syntax"] != SyntaxLark {
 					t.Errorf("expected syntax 'lark', got %v", format["syntax"])
 				}
 				definition := format["definition"].(string)
@@ -159,7 +160,7 @@ func TestGetOpenAITextFormatForCFG(t *testing.T) {
 		}
 
 		// Verify "type" key exists and is "text"
-		if format["type"] != "text" {
+		if format["type"] != TextFormatType {
 			t.Errorf("expected format.type to be 'text', got %v", format["type"])
 		}
 	})
