@@ -158,4 +158,3 @@ class TestGetOpenAITextFormatForCFG:
         assert format1 == format2
         assert format1["format"]["type"] == "text"
         assert format2["format"]["type"] == "text"
-
