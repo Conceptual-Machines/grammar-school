@@ -16,28 +16,16 @@ package main
 
 import (
     "context"
+    "fmt"
     "grammar-school/go/gs"
 )
 
 type MyDSL struct{}
 
-// Verb handlers transform DSL syntax → Actions (pure, no side effects)
-func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+// Methods execute directly - no Action return needed
+func (d *MyDSL) Greet(args gs.Args) error {
     name := args["name"].Str
-    action := gs.Action{
-        Kind: "greet",
-        Payload: map[string]interface{}{
-            "name": name,
-        },
-    }
-    return []gs.Action{action}, ctx, nil
-}
-
-type MyRuntime struct{}
-
-// Runtime executes Actions → Real world effects (side effects, state management)
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    fmt.Printf("Hello, %v!\n", a.Payload["name"])
+    fmt.Printf("Hello, %s!\n", name)
     return nil
 }
 
@@ -45,92 +33,49 @@ func main() {
     dsl := &MyDSL{}
     parser := &MyParser{} // Implement gs.Parser interface
 
-    // Runtime is stored in Engine (aligned with Python)
-    // Pass nil to use default runtime that prints actions
-    engine, _ := gs.NewEngine("", dsl, parser, &MyRuntime{})
+    // No runtime needed - methods execute directly
+    engine, _ := gs.NewEngine("", dsl, parser)
 
-    plan, _ := engine.Compile(`greet(name="World")`)
-    // Runtime is stored in engine, so Execute doesn't need it
-    engine.Execute(context.Background(), plan)
-
-    // Or override with a different runtime for this call:
-    // engine.Execute(context.Background(), plan, &OtherRuntime{})
+    // Execute DSL code - methods run directly
+    engine.Execute(context.Background(), `greet(name="World")`)
+    // Output: Hello, World!
 }
 ```
 
 ## Understanding the Architecture
 
-Grammar School uses a **two-layer architecture** (aligned with Python):
+Grammar School provides a **unified interface**:
 
-1. **Verb handlers (methods on DSL struct)**: Transform DSL syntax → Actions (pure, no side effects)
-2. **Runtime**: Execute Actions → Real world effects (side effects, state management)
+1. **Methods execute directly** - Methods contain their implementation
+2. **Framework handles the rest** - Parsing, interpretation, and execution happen automatically
 
-**Why this separation?**
-- Same Engine works with different Runtimes (testing, production, mocking)
-- Verb handlers are pure and easily testable
-- Runtime handles all state and side effects independently
+**Benefits:**
+- Simple and intuitive - just write methods with your logic
+- No need to separate concerns - methods can do anything
+- State management via struct fields
+- The Grammar/Runtime split is handled internally but hidden from you
 
-## Runtime Output
+## Streaming Execution
 
-**Default Runtime**: Prints actions to **stdout** (standard output/console)
+For large DSL programs or real-time processing, you can stream method executions:
 
-**Custom Runtimes**: Can output anywhere:
-- Files (write to disk)
-- Databases (store in SQL/NoSQL)
-- APIs (HTTP requests)
-- Logging systems
-- In-memory structures
-- Or any combination
-
-Example custom runtime that writes to a file:
 ```go
-type FileRuntime struct {
-    filename string
-}
+engine, _ := gs.NewEngine("", dsl, parser)
 
-func (r *FileRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    f, err := os.OpenFile(r.filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+// Stream method executions one at a time (memory efficient)
+errors := engine.Stream(context.Background(), `greet(name="A").greet(name="B").greet(name="C")`)
+for err := range errors {
     if err != nil {
-        return err
+        log.Fatal(err)
     }
-    defer f.Close()
-    _, err = fmt.Fprintf(f, "%s: %v\n", a.Kind, a.Payload)
-    return err
-}
-
-engine, _ := gs.NewEngine("", dsl, parser, &FileRuntime{filename: "output.log"})
-```
-
-## Streaming Actions
-
-For large DSL programs or real-time processing, you can stream actions as they're generated:
-
-```go
-engine, _ := gs.NewEngine("", dsl, parser, runtime)
-
-// Stream actions one at a time (memory efficient)
-actions, errors := engine.Stream(`track(name="A").track(name="B").track(name="C")`)
-for {
-    select {
-    case action, ok := <-actions:
-        if !ok {
-            return // Channel closed
-        }
-        fmt.Printf("Got action: %s\n", action.Kind)
-        // Process action immediately, don't wait for all actions
-        runtime.ExecuteAction(context.Background(), action)
-    case err := <-errors:
-        if err != nil {
-            log.Fatal(err)
-        }
-    }
+    // Methods execute as they're called
 }
 ```
 
 This is useful for:
-- **Large programs**: Don't load all actions into memory at once
-- **Real-time processing**: Start executing actions before compilation completes
-- **Memory efficiency**: Process actions incrementally
+- **Large programs**: Don't load all method calls into memory at once
+- **Real-time processing**: Start executing methods before parsing completes
+- **Memory efficiency**: Process methods incrementally
 
 ## Functional Programming Support
 
@@ -141,12 +86,10 @@ type MyDSL struct {
     gs.FunctionalMixin
 }
 
-func (d *MyDSL) Square(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *MyDSL) Square(args gs.Args) error {
     x := args["x"].Num
-    return []gs.Action{{
-        Kind: "square",
-        Payload: map[string]interface{}{"value": x * x},
-    }}, ctx, nil
+    fmt.Printf("Square: %v\n", x*x)
+    return nil
 }
 
 // Use functional operations with function references
@@ -176,15 +119,12 @@ See the `examples/` directory for complete DSL implementations.
 - `Arg`: Named argument
 - `Call`: Function call with arguments
 - `CallChain`: Chain of calls (method chaining)
-- `Action`: Runtime action produced by interpreter
-- `Context`: Execution context passed between verb handlers
-- `Args`: Map of string to Value for verb handler arguments
+- `Args`: Map of string to Value for method arguments
 
 ### Interfaces
 
 - `Parser`: Pluggable parser interface (implement with participle, pigeon, etc.)
-- `Runtime`: Interface for executing actions
-- `VerbHandler`: Function signature for verb handlers
+- `MethodHandler`: Function signature for method handlers
 
 ### Functional Programming
 
@@ -193,8 +133,8 @@ See the `examples/` directory for complete DSL implementations.
 ### Engine
 
 - `NewEngine`: Create a new engine with grammar, DSL instance, and parser
-- `Compile`: Parse and interpret DSL code into Actions
-- `Execute`: Execute a plan of actions using a Runtime
+- `Execute`: Parse and execute DSL code - methods run directly
+- `Stream`: Stream method executions for large programs
 
 ## Parser Backends
 

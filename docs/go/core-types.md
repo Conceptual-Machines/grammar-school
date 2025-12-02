@@ -94,54 +94,13 @@ chain := CallChain{
 }
 ```
 
-## Runtime Types
+## Method Handlers
 
-### Action
-
-Represents a runtime action produced by the interpreter.
-
-```go
-type Action struct {
-    Kind    string
-    Payload map[string]interface{}
-}
-```
-
-**Example:**
-```go
-action := Action{
-    Kind: "create_track",
-    Payload: map[string]interface{}{
-        "name":  "Drums",
-        "color": "blue",
-    },
-}
-```
-
-### Context
-
-Represents execution context passed between verb handlers.
-
-```go
-type Context struct {
-    Data map[string]interface{}
-}
-
-func NewContext() *Context
-func (c *Context) Get(key string) (interface{}, bool)
-func (c *Context) Set(key string, value interface{})
-```
-
-**Example:**
-```go
-ctx := NewContext()
-ctx.Set("last_track", "Drums")
-value, ok := ctx.Get("last_track")
-```
+Methods execute directly - no Action return needed. See the MethodHandler section below.
 
 ### Args
 
-Map of string to Value for verb handler arguments.
+Map of string to Value for method handler arguments.
 
 ```go
 type Args map[string]Value
@@ -155,26 +114,23 @@ args := Args{
 }
 ```
 
-### Runtime
+## Method Handlers
 
-Interface for executing actions.
+### MethodHandler
+
+Function signature for method handlers. Methods execute directly - no Action return needed.
 
 ```go
-type Runtime interface {
-    ExecuteAction(ctx context.Context, a Action) error
-}
+type MethodHandler func(args Args) error
 ```
 
 **Example:**
 ```go
-type MyRuntime struct{}
-
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a Action) error {
-    switch a.Kind {
-    case "greet":
-        name := a.Payload["name"].(string)
-        fmt.Printf("Hello, %s!\n", name)
-    }
+func (d *MyDSL) Greet(args Args) error {
+    name := args["name"].Str
+    fmt.Printf("Hello, %s!\n", name)
     return nil
 }
 ```
+
+**Note:** The `Action`, `Context`, and `Runtime` types still exist internally for the two-layer architecture, but users don't need to interact with them directly when using the unified interface.

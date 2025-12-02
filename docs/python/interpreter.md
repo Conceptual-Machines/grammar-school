@@ -1,33 +1,34 @@
 # Interpreter
 
-The interpreter converts AST (CallChain) into Actions.
+The interpreter executes methods directly from the AST.
 
 ## Overview
 
-The `Interpreter` class walks the `CallChain` AST, coerces `Value` objects to native Python types, dispatches to verb handlers, and collects returned `Action` objects.
+The `Interpreter` class walks the `CallChain` AST, coerces `Value` objects to native Python types, and calls `@method` handlers directly. Methods execute immediately when called.
 
 ## Basic Usage
 
 ```python
-from grammar_school import Grammar, Interpreter
+from grammar_school import Grammar, method
+
+class MyDSL(Grammar):
+    @method
+    def greet(self, name):
+        print(f"Hello, {name}!")
 
 dsl = MyDSL()
-grammar = Grammar(dsl)
 
 # The interpreter is created automatically by Grammar
-# But you can access it directly:
-interpreter = grammar.interpreter
-
-call_chain = grammar.parse('greet(name="Alice")')
-actions = interpreter.interpret(call_chain)
+# Methods execute directly when called
+dsl.execute('greet(name="Alice")')  # Prints: Hello, Alice!
 ```
 
 ## How It Works
 
 1. **Walk the CallChain** - Iterates through each `Call` in the chain
 2. **Coerce Values** - Converts `Value` objects to native Python types (str, int, float, bool)
-3. **Dispatch to Verbs** - Calls the appropriate verb handler method
-4. **Collect Actions** - Gathers all returned `Action` objects
+3. **Dispatch to Methods** - Calls the appropriate `@method` handler
+4. **Execute Directly** - Methods run immediately with their implementation
 
 ## Value Coercion
 
@@ -38,27 +39,35 @@ The interpreter automatically coerces `Value` objects:
 - `Value(kind="bool", value=True)` → `True`
 - `Value(kind="identifier", value="myVar")` → `"myVar"`
 
-## Verb Handler Return Values
+## Method Execution
 
-Verb handlers can return:
-
-1. **Single Action**: `return Action(...)`
-2. **Action and Context**: `return Action(...), context`
-3. **List of Actions**: `return [Action(...), Action(...)]`
-
-## Context Passing
-
-The interpreter maintains context between calls in a chain:
+Methods execute directly - they can do anything:
 
 ```python
-@verb
-def track(self, name, _context=None):
-    # _context contains the previous action or None
-    return Action(...)
+class MusicDSL(Grammar):
+    def __init__(self):
+        super().__init__()
+        self.tracks = []
+        self.current_track = None
 
-@verb
-def add_clip(self, start, length, _context=None):
-    # _context contains the action from track()
-    track_name = _context.payload["name"] if _context else None
-    return Action(...)
+    @method
+    def track(self, name):
+        # Implementation runs directly
+        self.current_track = {"name": name, "clips": []}
+        self.tracks.append(self.current_track)
+
+    @method
+    def add_clip(self, start, length):
+        # Access state via self
+        if self.current_track:
+            self.current_track["clips"].append({
+                "start": start,
+                "length": length
+            })
 ```
+
+Methods can:
+- Perform side effects (print, file I/O, API calls)
+- Maintain state via `self` attributes
+- Return values (if needed)
+- Access previous state from `self`

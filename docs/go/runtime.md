@@ -1,107 +1,61 @@
-# Runtime
+# Runtime (Internal Architecture)
 
-The Runtime executes Actions produced by the interpreter.
+**Note:** With the unified interface, you don't need to implement Runtime. Methods execute directly. This page documents the internal architecture for advanced users.
 
 ## Overview
 
-The `Runtime` interface defines how Actions are executed. You implement this interface to define the behavior of your DSL.
+Internally, Grammar School maintains a two-layer architecture:
+1. **Grammar layer**: Parses DSL and calls methods
+2. **Runtime layer**: Executes methods (handled automatically)
 
-## Implementing Runtime
+When using the unified interface, the Runtime layer is handled automatically - you just write methods with their implementation.
 
-```go
-type MyRuntime struct{}
+## Using Methods (Recommended)
 
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    switch a.Kind {
-    case "greet":
-        name := a.Payload["name"].(string)
-        fmt.Printf("Hello, %s!\n", name)
-    case "create_track":
-        // Handle track creation
-    }
-    return nil
-}
-```
-
-## Action Execution
-
-Actions are executed in the order they're produced by the interpreter:
+With the unified interface, you don't need Runtime:
 
 ```go
-plan, _ := engine.Compile(`track(name="Drums").add_clip(start=0, length=8)`)
-engine.Execute(context.Background(), runtime, plan)
-```
-
-This will:
-1. Execute the `create_track` action
-2. Execute the `add_clip` action
-
-## State Management
-
-The Runtime can maintain state across action executions:
-
-```go
-type MusicRuntime struct {
-    tracks       []map[string]interface{}
+type MyDSL struct {
+    tracks []map[string]interface{}
     currentTrack map[string]interface{}
 }
 
-func (r *MusicRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    switch a.Kind {
-    case "create_track":
-        r.currentTrack = map[string]interface{}{
-            "name":  a.Payload["name"],
-            "clips": []interface{}{},
-        }
-        r.tracks = append(r.tracks, r.currentTrack)
-    case "add_clip":
-        if r.currentTrack != nil {
-            clips := r.currentTrack["clips"].([]interface{})
-            clips = append(clips, map[string]interface{}{
-                "start":  a.Payload["start"],
-                "length": a.Payload["length"],
-            })
-            r.currentTrack["clips"] = clips
-        }
+func (d *MyDSL) Track(args gs.Args) error {
+    name := args["name"].Str
+    d.currentTrack = map[string]interface{}{
+        "name":  name,
+        "clips": []interface{}{},
+    }
+    d.tracks = append(d.tracks, d.currentTrack)
+    fmt.Printf("Created track: %s\n", name)
+    return nil
+}
+
+func (d *MyDSL) AddClip(args gs.Args) error {
+    start := args["start"].Num
+    length := args["length"].Num
+    if d.currentTrack != nil {
+        clips := d.currentTrack["clips"].([]interface{})
+        clips = append(clips, map[string]interface{}{
+            "start":  start,
+            "length": length,
+        })
+        d.currentTrack["clips"] = clips
     }
     return nil
 }
+
+// Usage
+dsl := &MyDSL{}
+engine, _ := gs.NewEngine("", dsl, parser)
+engine.Execute(context.Background(), `track(name="Drums").add_clip(start=0, length=8)`)
 ```
 
-## Error Handling
+## Internal Architecture
 
-Return errors from `ExecuteAction` to handle failures:
+The `Runtime` interface still exists internally, but is handled automatically when using methods. The framework:
+1. Parses DSL code
+2. Calls your method handlers directly
+3. Methods execute immediately
 
-```go
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    if a.Kind == "create_track" {
-        name := a.Payload["name"].(string)
-        for _, track := range r.tracks {
-            if track["name"] == name {
-                return fmt.Errorf("track %s already exists", name)
-            }
-        }
-        // ...
-    }
-    return nil
-}
-```
-
-## Context Usage
-
-The `context.Context` parameter allows you to:
-- Handle cancellation
-- Pass request-scoped values
-- Set timeouts
-
-```go
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    select {
-    case <-ctx.Done():
-        return ctx.Err()
-    default:
-        // Execute action
-    }
-    return nil
-}
-```
+You can manage state using struct fields in your DSL struct.

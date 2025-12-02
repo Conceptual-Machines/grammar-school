@@ -1,39 +1,29 @@
 """Example: Using GrammarBuilder to define grammars programmatically."""
 
-from grammar_school import Action, Grammar, GrammarBuilder, Runtime, verb
+from grammar_school import Grammar, GrammarBuilder, method
 
 
 class TaskGrammar(Grammar):
     """A simple task management DSL."""
 
-    @verb
-    def create_task(self, name: str, priority: str = "medium", _context=None):
-        """Create a new task."""
-        return Action(kind="create_task", payload={"name": name, "priority": priority})
-
-    @verb
-    def complete_task(self, name: str, _context=None):
-        """Mark a task as completed."""
-        return Action(kind="complete_task", payload={"name": name})
-
-
-class TaskRuntime(Runtime):
-    """Runtime that executes task management actions."""
-
-    def __init__(self):
+    def __init__(self, grammar=None):
+        super().__init__(grammar=grammar)
         self.tasks = {}
 
-    def execute(self, action: Action) -> None:
-        if action.kind == "create_task":
-            name = action.payload["name"]
-            priority = action.payload.get("priority", "medium")
-            self.tasks[name] = {"priority": priority, "completed": False}
-            print(f"✓ Created task: {name} (priority: {priority})")
-        elif action.kind == "complete_task":
-            name = action.payload["name"]
-            if name in self.tasks:
-                self.tasks[name]["completed"] = True
-                print(f"✓ Completed task: {name}")
+    @method
+    def create_task(self, name: str, priority: str = "medium"):
+        """Create a new task."""
+        self.tasks[name] = {"priority": priority, "completed": False}
+        print(f"✓ Created task: {name} (priority: {priority})")
+
+    @method
+    def complete_task(self, name: str):
+        """Mark a task as completed."""
+        if name in self.tasks:
+            self.tasks[name]["completed"] = True
+            print(f"✓ Completed task: {name}")
+        else:
+            print(f"✗ Task not found: {name}")
 
 
 def example_programmatic_grammar():
@@ -59,7 +49,7 @@ def example_programmatic_grammar():
     builder.directive("%ignore WS")
 
     # Use the built grammar
-    grammar = TaskGrammar(runtime=TaskRuntime(), grammar=builder)
+    grammar = TaskGrammar(grammar=builder)
 
     # Single statement with chaining (works with current grammar)
     code = 'create_task(name="Write docs", priority="high").complete_task(name="Write docs")'
@@ -82,7 +72,7 @@ def example_default_grammar():
 
     # Get default grammar
     builder = GrammarBuilder.default()
-    grammar = TaskGrammar(runtime=TaskRuntime(), grammar=builder)
+    grammar = TaskGrammar(grammar=builder)
 
     # Single statement (default grammar supports this)
     code = 'create_task(name="Write docs", priority="high").complete_task(name="Write docs")'

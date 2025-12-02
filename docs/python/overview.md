@@ -5,21 +5,15 @@ The Python implementation of Grammar School provides a clean, decorator-based AP
 ## Quick Example
 
 ```python
-from grammar_school import Action, Grammar, Runtime, verb
+from grammar_school import Grammar, method
 
-class MyDSL:
-    @verb
-    def greet(self, name, _context=None):
-        return Action(kind="greet", payload={"name": name})
-
-class MyRuntime(Runtime):
-    def execute(self, action: Action) -> None:
-        print(f"Hello, {action.payload['name']}!")
+class MyDSL(Grammar):
+    @method
+    def greet(self, name):
+        print(f"Hello, {name}!")
 
 dsl = MyDSL()
-grammar = Grammar(dsl)
-runtime = MyRuntime()
-grammar.execute('greet(name="World")', runtime)
+dsl.execute('greet(name="World")')
 ```
 
 ## Key Components
@@ -29,12 +23,18 @@ grammar.execute('greet(name="World")', runtime)
 The `Grammar` class orchestrates parsing and interpretation:
 
 ```python
-grammar = Grammar(dsl_instance, grammar=optional_custom_grammar)
+class MyDSL(Grammar):
+    @method
+    def greet(self, name):
+        print(f"Hello, {name}!")
+
+dsl = MyDSL()
+dsl.execute('greet(name="World")')
 ```
 
 ### Decorators
 
-- `@verb` - Marks a method as a verb handler
+- `@method` - Marks a method as a DSL handler (contains implementation)
 - `@rule` - Defines custom grammar rules (advanced)
 
 ### Core Types
@@ -43,8 +43,6 @@ grammar = Grammar(dsl_instance, grammar=optional_custom_grammar)
 - `Arg` - Named argument
 - `Call` - Function call
 - `CallChain` - Chain of calls
-- `Action` - Runtime action
-- `Runtime` - Protocol for executing actions
 
 ## See Also
 

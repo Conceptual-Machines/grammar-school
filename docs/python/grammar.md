@@ -15,10 +15,14 @@ Grammar School provides a default grammar that supports:
 ## Using the Default Grammar
 
 ```python
-from grammar_school import Grammar
+from grammar_school import Grammar, method
 
-dsl = MyDSL()
-grammar = Grammar(dsl)  # Uses default grammar
+class MyDSL(Grammar):
+    @method
+    def greet(self, name):
+        print(f"Hello, {name}!")
+
+dsl = MyDSL()  # Uses default grammar
 ```
 
 ## Custom Grammar
@@ -41,7 +45,12 @@ STRING: /"([^"\\\\]|\\\\.)*"|'([^'\\\\]|\\\\.)*'/
 BOOL: "true" | "false"
 """
 
-grammar = Grammar(dsl, grammar=custom_grammar)
+class MyDSL(Grammar):
+    @method
+    def greet(self, name):
+        print(f"Hello, {name}!")
+
+dsl = MyDSL(grammar=custom_grammar)
 ```
 
 ## Grammar Rules with @rule Decorator
@@ -52,10 +61,10 @@ For advanced use cases, you can use the `@rule` decorator:
 from grammar_school import rule
 
 @rule("call_chain: call ('.' call)*")
-class MyDSL:
-    @verb
+class MyDSL(Grammar):
+    @method
     def greet(self, name):
-        return Action(...)
+        print(f"Hello, {name}!")
 ```
 
 ## Grammar Syntax

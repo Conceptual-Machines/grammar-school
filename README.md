@@ -17,9 +17,9 @@
 
 Grammar School is a multi-language framework designed to help you quickly build **tiny, LLM-friendly DSLs** (Domain-Specific Languages). It provides a simple, consistent API across Python and Go that lets you:
 
-- **Define DSLs in minutes** - Just subclass `Grammar` and add `@verb` methods
+- **Define DSLs in minutes** - Just subclass `Grammar` and add `@method` methods
 - **Parse and interpret** - Built-in parser backends (Lark for Python, pluggable for Go)
-- **Execute safely** - Two-layer architecture separates DSL logic from side effects
+- **Execute directly** - Methods contain their implementation - simple and intuitive
 - **Integrate with LLMs** - Use your grammar as CFG constraints for GPT-5 and other LLMs
 - **Functional programming** - Built-in support for `map`, `filter`, `reduce`, `compose`, and `pipe`
 
@@ -31,7 +31,7 @@ Perfect for building:
 
 ## ✨ Features
 
-- **Simple API** - Define DSLs with just a few `@verb` methods
+- **Simple API** - Define DSLs with just a few `@method` methods
 - **Method Chaining** - Natural syntax: `track(name="A").add_clip(start=0)`
 - **LLM-Friendly** - Use grammars as CFG constraints for GPT-5 and other LLMs
 - **Functional Programming** - Built-in `map`, `filter`, `reduce`, `compose`, `pipe`
@@ -48,12 +48,12 @@ pip install grammar-school
 ```
 
 ```python
-from grammar_school import Grammar, verb, Action
+from grammar_school import Grammar, method
 
 class MyGrammar(Grammar):
-    @verb
-    def greet(self, name, _context=None):
-        return Action(kind="greet", payload={"name": name})
+    @method
+    def greet(self, name):
+        print(f"Hello, {name}!")
 
 grammar = MyGrammar()
 grammar.execute('greet(name="World")')
@@ -100,8 +100,8 @@ All implementations follow the same conceptual design:
 
 1. **DSL Program**: Plain string input (typically LLM-generated)
 2. **AST**: Abstract Syntax Tree (CallChain → Call → Arg → Value)
-3. **Actions**: Semantic evaluation output (runtime instructions)
-4. **Pipeline**: Parse → Interpret → Execute
+3. **Methods**: Direct execution - methods contain their implementation
+4. **Pipeline**: Parse → Interpret → Execute (methods run directly)
 
 See [SPEC.md](./SPEC.md) for the complete specification.
 

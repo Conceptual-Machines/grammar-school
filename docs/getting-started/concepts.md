@@ -11,10 +11,10 @@ DSL Code (string)
    ↓
 Parse → CallChain (AST)
    ↓
-Interpret → []Action (plan)
-   ↓
-Execute (runtime)
+Interpret → Execute methods directly
 ```
+
+**Note:** Internally, Grammar School maintains a two-layer architecture (Grammar/Runtime), but this is hidden from users. Methods execute directly when called.
 
 ## DSL Program
 
@@ -46,29 +46,23 @@ CallChain
       └─ Arg(name="count", value=Value(kind="number", value=2))
 ```
 
-## Actions
+## Methods
 
-Semantic evaluation produces `Action` objects:
-
-```python
-Action(
-    kind="create_track",
-    payload={"name": "Drums", "color": "blue"}
-)
-```
-
-Actions are runtime instructions that your `Runtime` implementation executes.
-
-## Verbs
-
-Verbs are semantic handlers that map DSL function calls to Actions:
+Methods are DSL handlers that contain the actual implementation:
 
 === "Python"
 
     ```python
-    @verb
-    def track(self, name, color=None, _context=None):
-        return Action(kind="create_track", payload={"name": name, "color": color})
+    class MusicDSL(Grammar):
+        def __init__(self):
+            super().__init__()
+            self.tracks = []
+
+        @method
+        def track(self, name, color=None):
+            track = {"name": name, "color": color}
+            self.tracks.append(track)
+            print(f"Created track: {name}")
     ```
 
 === "Go"
@@ -91,18 +85,21 @@ Verbs are semantic handlers that map DSL function calls to Actions:
     }
     ```
 
-## Runtime
+## Execution
 
-The Runtime executes Actions produced by the interpreter:
+Methods execute directly when called - no Runtime needed:
 
 === "Python"
 
     ```python
-    class MyRuntime(Runtime):
-        def execute(self, action: Action) -> None:
-            if action.kind == "create_track":
-                # Create a track...
-                pass
+    class MusicDSL(Grammar):
+        @method
+        def track(self, name):
+            # Implementation runs directly
+            print(f"Created track: {name}")
+    
+    dsl = MusicDSL()
+    dsl.execute('track(name="Drums")')  # Prints: Created track: Drums
     ```
 
 === "Go"
@@ -119,17 +116,29 @@ The Runtime executes Actions produced by the interpreter:
     }
     ```
 
-## Context
+## State Management
 
-Context can be passed between verb handlers to maintain state:
+State is managed using `self` attributes in your Grammar class:
 
 === "Python"
 
     ```python
-    @verb
-    def track(self, name, _context=None):
-        # _context contains previous action or None
-        return Action(...), new_context  # Return new context
+    class MusicDSL(Grammar):
+        def __init__(self):
+            super().__init__()
+            self.tracks = []
+            self.current_track = None
+
+        @method
+        def track(self, name):
+            self.current_track = {"name": name}
+            self.tracks.append(self.current_track)
+
+        @method
+        def add_clip(self, start, length):
+            if self.current_track:
+                # Access state via self
+                self.current_track["clips"].append({"start": start, "length": length})
     ```
 
 === "Go"
@@ -155,7 +164,12 @@ Grammars define the syntax of your DSL. Grammar School provides a default gramma
     call_chain: call ('.' call)*
     # ... more rules
     """
-    grammar = Grammar(dsl, grammar=custom_grammar)
+    class MyDSL(Grammar):
+        @method
+        def greet(self, name):
+            print(f"Hello, {name}!")
+    
+    dsl = MyDSL(grammar=custom_grammar)
     ```
 
 === "Go"

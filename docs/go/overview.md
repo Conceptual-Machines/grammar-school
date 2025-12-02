@@ -15,31 +15,18 @@ import (
 
 type MyDSL struct{}
 
-func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *MyDSL) Greet(args gs.Args) error {
     name := args["name"].Str
-    action := gs.Action{
-        Kind: "greet",
-        Payload: map[string]interface{}{
-            "name": name,
-        },
-    }
-    return []gs.Action{action}, ctx, nil
-}
-
-type MyRuntime struct{}
-
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    fmt.Printf("Hello, %v!\n", a.Payload["name"])
+    fmt.Printf("Hello, %s!\n", name)
     return nil
 }
 
 func main() {
     dsl := &MyDSL{}
-    // Note: Requires a Parser implementation
-    // engine, _ := gs.NewEngine("", dsl, parser)
-    // runtime := &MyRuntime{}
-    // plan, _ := engine.Compile(`greet(name="World")`)
-    // engine.Execute(context.Background(), runtime, plan)
+    parser := &MyParser{} // Implement gs.Parser interface
+    engine, _ := gs.NewEngine("", dsl, parser)
+    engine.Execute(context.Background(), `greet(name="World")`)
+    // Output: Hello, World!
 }
 ```
 
@@ -53,15 +40,16 @@ The `Engine` orchestrates parsing, interpretation, and execution:
 engine, err := gs.NewEngine(grammar, dsl, parser)
 ```
 
-### Verb Handlers
+### Method Handlers
 
-Verb handlers must match this signature:
+Method handlers must match this signature:
 
 ```go
-func (d *MyDSL) VerbName(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error)
+func (d *MyDSL) MethodName(args gs.Args) error
 ```
 
 The Engine uses reflection to automatically discover and register methods with this signature.
+Methods execute directly when called - no Action return needed.
 
 ### Core Types
 
@@ -69,10 +57,7 @@ The Engine uses reflection to automatically discover and register methods with t
 - `Arg` - Named argument
 - `Call` - Function call
 - `CallChain` - Chain of calls
-- `Action` - Runtime action
-- `Context` - Execution context
 - `Args` - Map of string to Value
-- `Runtime` - Interface for executing actions
 - `Parser` - Pluggable parser interface
 
 ## See Also

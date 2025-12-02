@@ -2,29 +2,32 @@
 
 A guide to building your own DSL with Grammar School.
 
-## Step 1: Define Your Verbs
+## Step 1: Define Your Methods
 
-Verbs are the functions that your DSL will support.
+Methods are the functions that your DSL will support. They contain the actual implementation.
 
 === "Python"
 
     ```python
-    from grammar_school import Action, verb
+    from grammar_school import Grammar, method
 
-    class MyDSL:
-        @verb
-        def create_user(self, name, email, _context=None):
-            return Action(
-                kind="create_user",
-                payload={"name": name, "email": email}
-            )
+    class MyDSL(Grammar):
+        def __init__(self):
+            super().__init__()
+            self.users = []
+            self.emails_sent = []
 
-        @verb
-        def send_email(self, to, subject, _context=None):
-            return Action(
-                kind="send_email",
-                payload={"to": to, "subject": subject}
-            )
+        @method
+        def create_user(self, name, email):
+            user = {"name": name, "email": email}
+            self.users.append(user)
+            print(f"Created user: {name}")
+
+        @method
+        def send_email(self, to, subject):
+            email = {"to": to, "subject": subject}
+            self.emails_sent.append(email)
+            print(f"Sent email to {to}")
     ```
 
 === "Go"
@@ -59,36 +62,23 @@ Verbs are the functions that your DSL will support.
     }
     ```
 
-## Step 2: Implement Your Runtime
+## Step 2: Use Your DSL
 
-The Runtime executes the Actions produced by your verbs.
+With the unified interface, methods execute directly - no Runtime needed!
 
 === "Python"
 
     ```python
-    from grammar_school import Action, Runtime
+    # Create your DSL instance
+    dsl = MyDSL()
 
-    class MyRuntime(Runtime):
-        def __init__(self):
-            self.users = []
-            self.emails_sent = []
+    # Execute DSL code - methods run directly
+    dsl.execute('create_user(name="Alice", email="alice@example.com")')
+    dsl.execute('send_email(to="bob@example.com", subject="Hello")')
 
-        def execute(self, action: Action) -> None:
-            if action.kind == "create_user":
-                user = {
-                    "name": action.payload["name"],
-                    "email": action.payload["email"]
-                }
-                self.users.append(user)
-                print(f"Created user: {user['name']}")
-
-            elif action.kind == "send_email":
-                email = {
-                    "to": action.payload["to"],
-                    "subject": action.payload["subject"]
-                }
-                self.emails_sent.append(email)
-                print(f"Sent email to {email['to']}")
+    # Access state if needed
+    print(f"Users: {dsl.users}")
+    print(f"Emails sent: {dsl.emails_sent}")
     ```
 
 === "Go"
@@ -126,18 +116,14 @@ The Runtime executes the Actions produced by your verbs.
 === "Python"
 
     ```python
-    from grammar_school import Grammar
-
     dsl = MyDSL()
-    grammar = Grammar(dsl)
-    runtime = MyRuntime()
 
     code = '''
     create_user(name="Alice", email="alice@example.com")
     send_email(to="alice@example.com", subject="Welcome!")
     '''
 
-    grammar.execute(code, runtime)
+    dsl.execute(code)
     ```
 
 === "Go"
@@ -158,31 +144,37 @@ The Runtime executes the Actions produced by your verbs.
 
 ## Best Practices
 
-1. **Keep Verbs Simple** - Each verb should do one thing
-2. **Use Meaningful Action Kinds** - Make action kinds descriptive
+1. **Keep Methods Simple** - Each method should do one thing
+2. **Use Meaningful Method Names** - Make method names descriptive
 3. **Handle Errors** - Validate inputs and handle errors appropriately
-4. **Maintain State Carefully** - Use the Runtime to manage state
-5. **Document Your DSL** - Document what each verb does and what actions it produces
+4. **Maintain State Carefully** - Use `self` attributes to manage state
+5. **Document Your DSL** - Document what each method does
 
 ## Advanced: Method Chaining
 
-You can support method chaining by returning context:
+Method chaining works naturally - methods can access state via `self`:
 
 === "Python"
 
     ```python
-    @verb
-    def track(self, name, _context=None):
-        return Action(kind="create_track", payload={"name": name})
+    class MusicDSL(Grammar):
+        def __init__(self):
+            super().__init__()
+            self.tracks = []
+            self.current_track = None
 
-    @verb
-    def add_clip(self, start, length, _context=None):
-        # _context contains the previous action
-        track_name = _context.payload["name"] if _context else None
-        return Action(
-            kind="add_clip",
-            payload={"track": track_name, "start": start, "length": length}
-        )
+        @method
+        def track(self, name):
+            self.current_track = {"name": name, "clips": []}
+            self.tracks.append(self.current_track)
+
+        @method
+        def add_clip(self, start, length):
+            if self.current_track:
+                self.current_track["clips"].append({
+                    "start": start,
+                    "length": length
+                })
     ```
 
 === "Go"

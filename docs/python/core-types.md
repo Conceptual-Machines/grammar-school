@@ -73,42 +73,16 @@ chain = CallChain(calls=[
 ])
 ```
 
-## Runtime Types
+## Method Decorators
 
-### Action
+### @method
 
-Represents a runtime action produced by the interpreter.
-
-```python
-@dataclass
-class Action:
-    kind: str
-    payload: dict[str, Any]
-```
-
-**Example:**
-```python
-action = Action(
-    kind="create_track",
-    payload={"name": "Drums", "color": "blue"}
-)
-```
-
-### Runtime
-
-Protocol for executing actions.
+Decorator to mark a method as a DSL handler. Methods contain their implementation directly.
 
 ```python
-class Runtime(Protocol):
-    def execute(self, action: Action) -> None:
-        ...
+@method
+def greet(self, name):
+    print(f"Hello, {name}!")
 ```
 
-**Example:**
-```python
-class MyRuntime(Runtime):
-    def execute(self, action: Action) -> None:
-        if action.kind == "create_track":
-            # Handle track creation
-            pass
-```
+**Note:** The `Action` and `Runtime` types still exist internally for the two-layer architecture, but users don't need to interact with them directly when using `@method`.
