@@ -285,3 +285,76 @@ func CleanGrammarForCFG(grammar string) string {
 
 	return strings.Join(cleaned, "\n")
 }
+
+// CFGConfig contains configuration for building an OpenAI CFG tool.
+type CFGConfig struct {
+	ToolName    string // Name of the tool that will receive the DSL output
+	Description string // Description of what the tool does
+	Grammar     string // Lark or regex grammar definition
+	Syntax      string // "lark" or "regex" (default: "lark")
+}
+
+// BuildOpenAICFGTool builds an OpenAI CFG tool payload from a CFGConfig.
+//
+// This function:
+//   - Cleans the grammar using CleanGrammarForCFG
+//   - Returns the properly formatted OpenAI tool structure
+//   - Ensures the syntax defaults to "lark" if not specified
+//
+// Args:
+//   - config: CFGConfig containing tool name, description, grammar, and syntax
+//
+// Returns:
+//   - map[string]any: OpenAI tool structure ready to be added to the tools array
+//
+// Example:
+//
+//	tool := gs.BuildOpenAICFGTool(gs.CFGConfig{
+//		ToolName:    "magda_dsl",
+//		Description: "Generates MAGDA DSL code for REAPER automation",
+//		Grammar:     grammarString,
+//		Syntax:      "lark",
+//	})
+//	// Add tool to OpenAI request: tools = append(tools, tool)
+func BuildOpenAICFGTool(config CFGConfig) map[string]any {
+	// Clean the grammar for CFG
+	cleanedGrammar := CleanGrammarForCFG(config.Grammar)
+
+	// Default to "lark" if syntax is not specified
+	syntax := config.Syntax
+	if syntax == "" {
+		syntax = "lark"
+	}
+
+	// Build the OpenAI CFG tool structure
+	return map[string]any{
+		"type":        "custom",
+		"name":        config.ToolName,
+		"description": config.Description,
+		"format": map[string]any{
+			"type":       "grammar",
+			"syntax":     syntax,
+			"definition": cleanedGrammar,
+		},
+	}
+}
+
+// GetOpenAITextFormatForCFG returns the text format configuration that should be used
+// when making OpenAI requests with CFG tools.
+//
+// When using CFG, the text format must be set to "text" (not JSON schema) because
+// the output is DSL code, not JSON.
+//
+// Returns:
+//   - map[string]any: Text format config: {"format": {"type": "text"}}
+//
+// Example:
+//
+//	paramsMap["text"] = gs.GetOpenAITextFormatForCFG()
+func GetOpenAITextFormatForCFG() map[string]any {
+	return map[string]any{
+		"format": map[string]any{
+			"type": "text",
+		},
+	}
+}

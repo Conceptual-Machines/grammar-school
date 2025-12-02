@@ -11,6 +11,11 @@ from grammar_school.grammar_config import (
     load_grammar_from_yaml,
 )
 from grammar_school.interpreter import Interpreter
+from grammar_school.openai_utils import (
+    CFGConfig,
+    build_openai_cfg_tool,
+    get_openai_text_format_for_cfg,
+)
 from grammar_school.runtime import Action, Runtime
 from grammar_school.version import __version__
 
@@ -19,6 +24,7 @@ __all__ = [
     "Arg",
     "Call",
     "CallChain",
+    "CFGConfig",
     "DEFAULT_GRAMMAR",
     "FunctionalMixin",
     "Grammar",
@@ -28,6 +34,8 @@ __all__ = [
     "Runtime",
     "Value",
     "__version__",
+    "build_openai_cfg_tool",
+    "get_openai_text_format_for_cfg",
     "load_grammar_from_config",
     "load_grammar_from_toml",
     "load_grammar_from_yaml",
