@@ -197,19 +197,19 @@ from grammar_school.cfg_vendor import CFGProvider
 
 class AnthropicCFGProvider(CFGProvider):
     """Custom vendor for Anthropic's Claude API."""
-    
+
     def build_tool(self, tool_name, description, grammar, syntax):
         # Implement vendor-specific tool structure
         ...
-    
+
     def get_text_format(self):
         # Return vendor-specific text format
         ...
-    
+
     def generate(self, prompt, model, tools, text_format, client=None, **kwargs):
         # Implement vendor-specific generation
         ...
-    
+
     def extract_dsl_code(self, response):
         # Extract DSL code from vendor response
         ...

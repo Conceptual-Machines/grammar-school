@@ -167,17 +167,17 @@ class CFGProvider(ABC):
     def build_tool(self, tool_name: str, description: str, grammar: str, syntax: str) -> dict[str, Any]:
         """Builds the vendor-specific CFG tool payload."""
         pass
-    
+
     @abstractmethod
     def get_text_format(self) -> dict[str, Any]:
         """Returns the text format configuration for the vendor's API."""
         pass
-    
+
     @abstractmethod
     def generate(self, prompt: str, model: str, tools: list[dict], text_format: dict, client=None, **kwargs) -> Any:
         """Generates DSL code using the vendor's LLM."""
         pass
-    
+
     @abstractmethod
     def extract_dsl_code(self, response: Any) -> str:
         """Extracts DSL code from the vendor's response."""

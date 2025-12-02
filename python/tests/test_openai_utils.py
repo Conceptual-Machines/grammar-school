@@ -1,66 +1,46 @@
 """Tests for OpenAI CFG utility functions."""
 
 from grammar_school.backend_lark import LarkBackend
-from grammar_school.openai_utils import (
-    CFGConfig,
-    build_openai_cfg_tool,
-    get_openai_text_format_for_cfg,
-)
+from grammar_school.openai_utils import OpenAICFG
 
 
-class TestCFGConfig:
-    """Test CFGConfig dataclass."""
+class TestOpenAICFG:
+    """Test OpenAICFG class."""
 
-    def test_cfg_config_creation(self):
-        """Test creating a CFGConfig instance."""
-        config = CFGConfig(
+    def test_cfg_creation(self):
+        """Test creating an OpenAICFG instance."""
+        cfg = OpenAICFG(
             tool_name="test_tool",
             description="Test tool description",
             grammar="start: test",
             syntax="lark",
         )
 
-        assert config.tool_name == "test_tool"
-        assert config.description == "Test tool description"
-        assert config.grammar == "start: test"
-        assert config.syntax == "lark"
+        assert cfg.tool_name == "test_tool"
+        assert cfg.description == "Test tool description"
+        assert cfg.grammar == "start: test"
+        assert cfg.syntax == "lark"
 
-    def test_cfg_config_default_syntax(self):
-        """Test CFGConfig defaults to 'lark' syntax."""
-        config = CFGConfig(
+    def test_cfg_default_syntax(self):
+        """Test OpenAICFG defaults to 'lark' syntax."""
+        cfg = OpenAICFG(
             tool_name="test_tool",
             description="Test tool description",
             grammar="start: test",
         )
 
-        assert config.syntax == "lark"
-
-    def test_cfg_config_repr(self):
-        """Test CFGConfig has proper __repr__ from dataclass."""
-        config = CFGConfig(
-            tool_name="test_tool",
-            description="Test tool description",
-            grammar="start: test",
-        )
-
-        repr_str = repr(config)
-        assert "test_tool" in repr_str
-        assert "CFGConfig" in repr_str
-
-
-class TestBuildOpenAICFGTool:
-    """Test build_openai_cfg_tool function."""
+        assert cfg.syntax == "lark"
 
     def test_build_tool_structure(self):
         """Test that the returned dictionary has the correct structure."""
-        config = CFGConfig(
+        cfg = OpenAICFG(
             tool_name="magda_dsl",
             description="Generates MAGDA DSL code",
             grammar="start: track",
             syntax="lark",
         )
 
-        tool = build_openai_cfg_tool(config)
+        tool = cfg.build_tool()
 
         assert tool["type"] == "custom"
         assert tool["name"] == "magda_dsl"
@@ -77,14 +57,14 @@ class TestBuildOpenAICFGTool:
 start: track
 track: "track"
 """
-        config = CFGConfig(
+        cfg = OpenAICFG(
             tool_name="test_tool",
             description="Test tool",
             grammar=grammar_with_directives,
             syntax="lark",
         )
 
-        tool = build_openai_cfg_tool(config)
+        tool = cfg.build_tool()
         cleaned_grammar = tool["format"]["definition"]
 
         # Verify %import directive was removed
@@ -99,51 +79,48 @@ track: "track"
 
     def test_default_syntax_handling(self):
         """Test that syntax defaults to 'lark' when not specified."""
-        config = CFGConfig(
+        cfg = OpenAICFG(
             tool_name="test_tool",
             description="Test tool",
             grammar="start: test",
             syntax="",  # Empty string should default to "lark"
         )
 
-        tool = build_openai_cfg_tool(config)
+        tool = cfg.build_tool()
         assert tool["format"]["syntax"] == "lark"
 
     def test_regex_syntax(self):
         """Test that regex syntax is preserved."""
-        config = CFGConfig(
+        cfg = OpenAICFG(
             tool_name="test_tool",
             description="Test tool",
             grammar="^\\d+$",
             syntax="regex",
         )
 
-        tool = build_openai_cfg_tool(config)
+        tool = cfg.build_tool()
         assert tool["format"]["syntax"] == "regex"
 
     def test_all_config_fields_used(self):
         """Test that all config fields are properly used in the tool."""
-        config = CFGConfig(
+        cfg = OpenAICFG(
             tool_name="custom_tool",
             description="Custom description with special chars: !@#$",
             grammar='start: custom_rule\ncustom_rule: "value"',
             syntax="lark",
         )
 
-        tool = build_openai_cfg_tool(config)
+        tool = cfg.build_tool()
 
         assert tool["name"] == "custom_tool"
         assert tool["description"] == "Custom description with special chars: !@#$"
         assert tool["format"]["syntax"] == "lark"
         assert "custom_rule" in tool["format"]["definition"]
 
-
-class TestGetOpenAITextFormatForCFG:
-    """Test get_openai_text_format_for_cfg function."""
-
     def test_text_format_structure(self):
         """Test that the returned dictionary has the correct structure."""
-        text_format = get_openai_text_format_for_cfg()
+        cfg = OpenAICFG(tool_name="test", description="test", grammar="start: test")
+        text_format = cfg.get_text_format()
 
         assert isinstance(text_format, dict)
         assert "format" in text_format
@@ -152,8 +129,9 @@ class TestGetOpenAITextFormatForCFG:
 
     def test_text_format_consistency(self):
         """Test that the function returns the same structure on multiple calls."""
-        format1 = get_openai_text_format_for_cfg()
-        format2 = get_openai_text_format_for_cfg()
+        cfg = OpenAICFG(tool_name="test", description="test", grammar="start: test")
+        format1 = cfg.get_text_format()
+        format2 = cfg.get_text_format()
 
         assert format1 == format2
         assert format1["format"]["type"] == "text"

@@ -78,4 +78,3 @@ func (v *OpenAICFGProvider) ExtractDSLCode(response interface{}) (string, error)
 	// For now, return empty string to indicate it needs to be implemented
 	return "", nil
 }
-

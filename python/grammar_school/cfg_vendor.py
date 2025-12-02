@@ -6,7 +6,7 @@ to support Context-Free Grammar (CFG) constraints with Grammar School.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 
 class CFGProvider(ABC):
@@ -76,7 +76,7 @@ class CFGProvider(ABC):
         model: str,
         tools: list[dict[str, Any]],
         text_format: dict[str, Any],
-        client: Optional[Any] = None,
+        client: Any | None = None,
         **kwargs: Any,
     ) -> Any:
         """
@@ -96,7 +96,7 @@ class CFGProvider(ABC):
         pass
 
     @abstractmethod
-    def extract_dsl_code(self, response: Any) -> Optional[str]:
+    def extract_dsl_code(self, response: Any) -> str | None:
         """
         Extract DSL code from the provider's response.
 
@@ -146,14 +146,16 @@ class OpenAICFGProvider(CFGProvider):
         model: str,
         tools: list[dict[str, Any]],
         text_format: dict[str, Any],
-        client: Optional[Any] = None,
+        client: Any | None = None,
         **kwargs: Any,
     ) -> Any:
         """Generate response from OpenAI API."""
         try:
             from openai import OpenAI
-        except ImportError:
-            raise ImportError("OpenAI SDK is required. Install it with: pip install openai")
+        except ImportError as err:
+            raise ImportError(
+                "OpenAI SDK is required. Install it with: pip install openai"
+            ) from err
 
         if client is None:
             client = OpenAI()
@@ -166,7 +168,7 @@ class OpenAICFGProvider(CFGProvider):
             **kwargs,
         )
 
-    def extract_dsl_code(self, response: Any) -> Optional[str]:
+    def extract_dsl_code(self, response: Any) -> str | None:
         """Extract DSL code from OpenAI response."""
         for item in response.output:
             if hasattr(item, "type") and item.type == "custom_tool_call":

@@ -6,7 +6,7 @@ that use Grammar School grammars as constraints.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 
@@ -127,7 +127,7 @@ class OpenAICFG:
         self,
         tool_name: str,
         description: str,
-        grammar: Optional[str] = None,
+        grammar: str | None = None,
         syntax: str = "lark",
     ):
         """
