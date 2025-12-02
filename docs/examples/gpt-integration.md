@@ -66,37 +66,44 @@ class TaskRuntime(Runtime):
 # Initialize Grammar School
 grammar = TaskGrammar(runtime=TaskRuntime())
 
-# Get grammar definition for CFG
-# Note: TaskGrammar defines the *semantics* (verbs: create_task, complete_task, etc.)
-# but DEFAULT_GRAMMAR defines the *syntax* (how to parse "verb_name(arg=value)").
-# GPT-5 needs the syntax rules to generate valid code structure.
-from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
+# Use CFG provider to build OpenAI tool and generate DSL code
+from grammar_school.cfg_vendor import OpenAICFGProvider
+from grammar_school.openai_utils import OpenAICFG
 
-# Clean up grammar for GPT-5 CFG (remove unsupported directives)
-cleaned_grammar = LarkBackend.clean_grammar_for_cfg(DEFAULT_GRAMMAR)
+# Create CFG provider (OpenAI)
+provider = OpenAICFGProvider()
 
-# Call GPT-5 with CFG constraint
-client = OpenAI()
-response = client.responses.create(
-    model="gpt-5",
-    input="Create a task called 'Write docs' with high priority",
-    tools=[{
-        "type": "custom",
-        "name": "task_dsl",
-        "description": "Executes task management operations using Grammar School DSL.",
-        "format": {
-            "type": "grammar",
-            "syntax": "lark",
-            "definition": cleaned_grammar,
-        },
-    }],
+# Build the CFG tool payload
+cfg_tool = provider.build_tool(
+    tool_name="task_dsl",
+    description="Executes task management operations using Grammar School DSL.",
+    grammar=grammar.backend.grammar,  # Get grammar from Grammar instance
+    syntax="lark",
 )
 
+# Get text format configuration (required for CFG)
+text_format = provider.get_text_format()
+
+# Generate DSL code using OpenAI
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-5",
+    messages=[{"role": "user", "content": "Create a task called 'Write docs' with high priority"}],
+    tools=[cfg_tool],
+    tool_choice={"type": "required", "tool": {"name": "task_dsl"}},
+    **text_format,
+)
+
+# Extract DSL code from response
+dsl_code = provider.extract_dsl_code(response)
+
 # Execute the generated DSL code
-for item in response.output:
-    if hasattr(item, "type") and item.type == "custom_tool_call":
-        dsl_code = item.input
+if dsl_code:
+    try:
         grammar.execute(dsl_code)
+        print("Task created successfully!")
+    except Exception as e:
+        print(f"Error executing DSL: {e}")
 ```
 
 ## Benefits
@@ -105,6 +112,108 @@ for item in response.output:
 - **No Parsing Errors**: Generated code is guaranteed to be syntactically correct
 - **Type Safety**: The grammar enforces correct argument types and structure
 - **Easy Integration**: Use Grammar School's existing grammar definitions
+
+## Using OpenAI CFG - The Simple Way
+
+For OpenAI, you can use the convenient `OpenAICFG` class:
+
+```python
+from grammar_school.openai_utils import OpenAICFG
+
+# Create OpenAI CFG configuration
+cfg = OpenAICFG(
+    tool_name="task_dsl",
+    description="Task management DSL",
+    grammar=grammar.backend.grammar,  # Or use default Grammar School grammar
+)
+
+# Build tool and get text format
+tool = cfg.build_tool()
+text_format = cfg.get_text_format()
+
+# Use with OpenAI client
+from openai import OpenAI
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-5",
+    messages=[{"role": "user", "content": "Create a task"}],
+    tools=[tool],
+    tool_choice={"type": "required", "tool": {"name": "task_dsl"}},
+    **text_format,
+)
+```
+
+The `OpenAICFG` class is a convenient wrapper that handles:
+- Building OpenAI CFG tool payloads
+- Configuring text format for CFG requests
+- Grammar cleaning (removing unsupported Lark directives)
+
+## Using CFG Providers
+
+For more advanced use cases or to support multiple LLM providers, Grammar School provides a `CFGProvider` interface. The `OpenAICFGProvider` handles OpenAI-specific CFG integration:
+
+```python
+from grammar_school.cfg_vendor import OpenAICFGProvider
+from grammar_school.openai_utils import OpenAICFG
+
+# Initialize your grammar
+grammar = TaskGrammar(runtime=TaskRuntime())
+
+# Create CFG provider
+provider = OpenAICFGProvider()
+
+# Build the CFG tool payload
+cfg_tool = provider.build_tool(
+    tool_name="task_dsl",
+    description="Task management DSL",
+    grammar=grammar.backend.grammar,
+    syntax="lark",
+)
+
+# Get text format configuration
+text_format = provider.get_text_format()
+
+# Use with OpenAI client
+from openai import OpenAI
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-5",
+    messages=[{"role": "user", "content": "Create a task"}],
+    tools=[cfg_tool],
+    tool_choice={"type": "required", "tool": {"name": "task_dsl"}},
+    **text_format,
+)
+
+# Extract and execute DSL code
+dsl_code = provider.extract_dsl_code(response)
+if dsl_code:
+    grammar.execute(dsl_code)
+```
+
+You can implement your own provider for other LLM providers:
+
+```python
+from grammar_school.cfg_vendor import CFGProvider
+
+class AnthropicCFGProvider(CFGProvider):
+    """Custom vendor for Anthropic's Claude API."""
+
+    def build_tool(self, tool_name, description, grammar, syntax):
+        # Implement vendor-specific tool structure
+        ...
+
+    def get_text_format(self):
+        # Return vendor-specific text format
+        ...
+
+    def generate(self, prompt, model, tools, text_format, client=None, **kwargs):
+        # Implement vendor-specific generation
+        ...
+
+    def extract_dsl_code(self, response):
+        # Extract DSL code from vendor response
+        ...
+```
 
 ## Requirements
 
