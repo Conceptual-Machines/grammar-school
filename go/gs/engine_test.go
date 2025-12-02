@@ -181,4 +181,3 @@ func TestGetOpenAITextFormatForCFG(t *testing.T) {
 		}
 	})
 }
-
