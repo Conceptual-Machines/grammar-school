@@ -192,3 +192,62 @@ Cleans a grammar string for use with CFG systems (e.g., GPT-5). Removes parser-s
 - Lines starting with `%` (Lark directives like `%import`, `%ignore`)
 - Empty lines for cleaner output
 - Other parser-specific meta-directives
+
+### CFGProvider Interface
+
+Grammar School provides a `CFGProvider` interface for integrating with different LLM providers that support CFG. This allows you to use the same API with different LLM providers.
+
+```go
+type CFGProvider interface {
+    BuildTool(toolName, description, grammar, syntax string) map[string]any
+    GetTextFormat() map[string]any
+    Generate(ctx context.Context, prompt, model string, tools []map[string]any, textFormat map[string]any, client interface{}, kwargs map[string]any) (interface{}, error)
+    ExtractDSLCode(response interface{}) (string, error)
+}
+```
+
+### OpenAICFGProvider
+
+```go
+import "grammar-school/go/gs"
+
+provider := &gs.OpenAICFGProvider{}
+cfgTool := provider.BuildTool(
+    "task_dsl",
+    "Task management DSL",
+    grammarString,
+    gs.SyntaxLark,
+)
+textFormat := provider.GetTextFormat()
+```
+
+The `OpenAICFGProvider` struct implements the `CFGProvider` interface for OpenAI's API. It handles:
+- Building OpenAI-specific CFG tool payloads
+- Configuring text format for CFG requests
+- Generating DSL code using OpenAI's API
+- Extracting DSL code from OpenAI responses
+
+**Example:**
+
+```go
+import (
+    "context"
+    "grammar-school/go/gs"
+    "github.com/openai/openai-go"
+)
+
+provider := &gs.OpenAICFGProvider{}
+cfgTool := provider.BuildTool(
+    "task_dsl",
+    "Task management DSL",
+    engine.Grammar(),
+    gs.SyntaxLark,
+)
+textFormat := provider.GetTextFormat()
+
+// Use with OpenAI client
+// ... (OpenAI API call) ...
+
+dslCode, _ := provider.ExtractDSLCode(response)
+engine.Execute(ctx, dslCode)
+```

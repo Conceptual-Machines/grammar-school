@@ -367,3 +367,95 @@ func GetOpenAITextFormatForCFG() map[string]any {
 		},
 	}
 }
+
+// OpenAICFG is a convenient struct for building OpenAI CFG tool configurations.
+//
+// This struct encapsulates all the functionality needed to create OpenAI CFG tools
+// from Grammar School grammars, eliminating the need to import and compose
+// multiple utilities.
+//
+// Example:
+//
+//	// Use default Grammar School grammar (if available)
+//	cfg := &gs.OpenAICFG{
+//		ToolName:    "task_dsl",
+//		Description: "Executes task management operations using Grammar School DSL.",
+//		Grammar:     "", // Empty string will use default if set
+//		Syntax:      gs.SyntaxLark,
+//	}
+//
+//	// Build the tool and get text format
+//	tool := cfg.BuildTool()
+//	textFormat := cfg.GetTextFormat()
+type OpenAICFG struct {
+	ToolName    string // Name of the tool that will receive the DSL output
+	Description string // Description of what the tool does
+	Grammar     string // Lark or regex grammar definition (empty string uses default if available)
+	Syntax      string // "lark" or "regex" (default: "lark")
+}
+
+// BuildTool builds the OpenAI CFG tool payload.
+//
+// Returns:
+//   - map[string]any: OpenAI tool structure ready to be added to the tools array
+//
+// Example:
+//
+//	cfg := &gs.OpenAICFG{
+//		ToolName:    "my_tool",
+//		Description: "My tool",
+//		Grammar:     grammarString,
+//	}
+//	tool := cfg.BuildTool()
+//	// Use in OpenAI request: tools = append(tools, tool)
+func (c *OpenAICFG) BuildTool() map[string]any {
+	return BuildOpenAICFGTool(CFGConfig{
+		ToolName:    c.ToolName,
+		Description: c.Description,
+		Grammar:     c.Grammar,
+		Syntax:      c.Syntax,
+	})
+}
+
+// GetTextFormat returns the text format configuration for OpenAI requests with CFG.
+//
+// Returns:
+//   - map[string]any: Text format config: {"format": {"type": "text"}}
+//
+// Example:
+//
+//	cfg := &gs.OpenAICFG{
+//		ToolName:    "my_tool",
+//		Description: "My tool",
+//	}
+//	textFormat := cfg.GetTextFormat()
+//	// Use in OpenAI request: text = textFormat
+func (c *OpenAICFG) GetTextFormat() map[string]any {
+	return GetOpenAITextFormatForCFG()
+}
+
+// BuildRequestConfig builds a complete request configuration with both tool and text format.
+//
+// This is a convenience method that returns both the tool and text format
+// in a single map structure that can be easily merged into OpenAI request params.
+//
+// Returns:
+//   - map[string]any: Map with "tool" and "text" keys ready for OpenAI request
+//
+// Example:
+//
+//	cfg := &gs.OpenAICFG{
+//		ToolName:    "my_tool",
+//		Description: "My tool",
+//		Grammar:     grammarString,
+//	}
+//	config := cfg.BuildRequestConfig()
+//	// Use in OpenAI request:
+//	// tools = append(tools, config["tool"].(map[string]any))
+//	// text = config["text"].(map[string]any)
+func (c *OpenAICFG) BuildRequestConfig() map[string]any {
+	return map[string]any{
+		"tool": c.BuildTool(),
+		"text": c.GetTextFormat(),
+	}
+}
