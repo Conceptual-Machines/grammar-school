@@ -70,26 +70,24 @@ grammar = TaskGrammar(runtime=TaskRuntime())
 # Note: TaskGrammar defines the *semantics* (verbs: create_task, complete_task, etc.)
 # but DEFAULT_GRAMMAR defines the *syntax* (how to parse "verb_name(arg=value)").
 # GPT-5 needs the syntax rules to generate valid code structure.
-from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
+from grammar_school.backend_lark import DEFAULT_GRAMMAR
+from grammar_school.openai_utils import CFGConfig, build_openai_cfg_tool, get_openai_text_format_for_cfg
 
-# Clean up grammar for GPT-5 CFG (remove unsupported directives)
-cleaned_grammar = LarkBackend.clean_grammar_for_cfg(DEFAULT_GRAMMAR)
+# Use the utility function to build the OpenAI CFG tool
+tool = build_openai_cfg_tool(CFGConfig(
+    tool_name="task_dsl",
+    description="Executes task management operations using Grammar School DSL.",
+    grammar=DEFAULT_GRAMMAR,
+    syntax="lark",
+))
 
 # Call GPT-5 with CFG constraint
 client = OpenAI()
 response = client.responses.create(
     model="gpt-5",
     input="Create a task called 'Write docs' with high priority",
-    tools=[{
-        "type": "custom",
-        "name": "task_dsl",
-        "description": "Executes task management operations using Grammar School DSL.",
-        "format": {
-            "type": "grammar",
-            "syntax": "lark",
-            "definition": cleaned_grammar,
-        },
-    }],
+    text=get_openai_text_format_for_cfg(),  # Required: set text format to "text" for CFG
+    tools=[tool],
 )
 
 # Execute the generated DSL code
@@ -105,6 +103,36 @@ for item in response.output:
 - **No Parsing Errors**: Generated code is guaranteed to be syntactically correct
 - **Type Safety**: The grammar enforces correct argument types and structure
 - **Easy Integration**: Use Grammar School's existing grammar definitions
+
+## Using the OpenAI CFG Utilities
+
+Grammar School provides utility functions to simplify building OpenAI CFG tool payloads:
+
+```python
+from grammar_school.openai_utils import CFGConfig, build_openai_cfg_tool, get_openai_text_format_for_cfg
+
+# Build the CFG tool
+tool = build_openai_cfg_tool(CFGConfig(
+    tool_name="task_dsl",
+    description="Executes task management operations using Grammar School DSL.",
+    grammar=DEFAULT_GRAMMAR,
+    syntax="lark",
+))
+
+# Use in OpenAI request
+response = client.responses.create(
+    model="gpt-5",
+    input="Create a task called 'Write docs' with high priority",
+    text=get_openai_text_format_for_cfg(),  # Required for CFG
+    tools=[tool],
+)
+```
+
+These utilities handle:
+- Grammar cleaning (removing unsupported Lark directives)
+- Proper OpenAI tool structure
+- Text format configuration (required for CFG, not JSON schema)
+- Default syntax handling
 
 ## Requirements
 
