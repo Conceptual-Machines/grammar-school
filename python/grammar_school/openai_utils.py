@@ -5,34 +5,20 @@ This module provides helper functions to build OpenAI CFG tool payloads
 that use Grammar School grammars as constraints.
 """
 
+from dataclasses import dataclass
 from typing import Any
 
 from grammar_school.backend_lark import LarkBackend
 
 
+@dataclass
 class CFGConfig:
     """Configuration for building an OpenAI CFG tool."""
 
-    def __init__(
-        self,
-        tool_name: str,
-        description: str,
-        grammar: str,
-        syntax: str = "lark",
-    ):
-        """
-        Initialize CFG configuration.
-
-        Args:
-            tool_name: Name of the tool that will receive the DSL output
-            description: Description of what the tool does
-            grammar: Lark or regex grammar definition
-            syntax: "lark" or "regex" (default: "lark")
-        """
-        self.tool_name = tool_name
-        self.description = description
-        self.grammar = grammar
-        self.syntax = syntax
+    tool_name: str
+    description: str
+    grammar: str
+    syntax: str = "lark"
 
 
 def build_openai_cfg_tool(config: CFGConfig) -> dict[str, Any]:
