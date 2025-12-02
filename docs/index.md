@@ -12,6 +12,7 @@ Grammar School is a lightweight, multi-language framework for creating small, pr
 - 🌍 **Multi-Language** - Independent implementations in Python and Go
 - 🤖 **LLM-Friendly** - Designed for LLM-generated DSL code
 - 📦 **Lightweight** - Minimal dependencies, focused API
+- 🔧 **OpenAI CFG Integration** - Built-in utilities for GPT-5 Context-Free Grammar constraints
 
 ## Quick Example
 
