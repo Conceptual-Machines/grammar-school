@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout grammar-school-python
+        uses: actions/checkout@v4
+        with:
+          repository: Conceptual-Machines/grammar-school-python
+          path: grammar-school-python
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -29,7 +35,7 @@ jobs:
           cache-dependency-glob: ""
 
       - name: Install dependencies
-        working-directory: python
+        working-directory: grammar-school-python
         run: |
           uv pip install --system -e ".[docs]"
 

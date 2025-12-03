@@ -13,7 +13,7 @@ Grammar School was partly inspired by Anthropic's article on [Code execution wit
 
 **A lightweight framework for building tiny LLM-friendly Domain-Specific Languages (DSLs)**
 
-[Features](#features) • [Quick Start](#quick-start) • [Documentation](https://conceptual-machines.github.io/grammar-school/) • [Examples](#examples)
+[Features](#features) • [Language Implementations](#language-implementations) • [Documentation](#documentation) • [Examples](#examples)
 
 </div>
 
@@ -33,19 +33,11 @@ Perfect for building:
 - **Workflow engines** - Chain operations with method chaining
 - **Domain-specific commands** - Music, graphics, data processing, etc.
 
-## ✨ Features
+## Language Implementations
 
-- **Simple API** - Define DSLs with just a few `@method` methods
-- **Method Chaining** - Natural syntax: `track(name="A").add_clip(start=0)`
-- **LLM-Friendly** - Use grammars as CFG constraints for GPT-5 and other LLMs
-- **Functional Programming** - Implement your own functional methods for your domain
-- **Multi-Language** - Consistent API across Python and Go
-- **Well-Tested** - Comprehensive test suite with 80%+ coverage
-- **Well-Documented** - Full API docs and examples
+### 🐍 Python Implementation
 
-## 🚀 Quick Start
-
-### 🐍 Python
+**Repository:** [`grammar-school-python`](https://github.com/Conceptual-Machines/grammar-school-python)
 
 ```bash
 pip install grammar-school
@@ -56,77 +48,78 @@ from grammar_school import Grammar, method
 
 class MyGrammar(Grammar):
     @method
-    def greet(self, name):
-        print(f"Hello, {name}!")
+    def my_method(self, arg: str):
+        ...
 
 grammar = MyGrammar()
-grammar.execute('greet(name="World")')
+grammar.execute(dsl_code)
 ```
 
-### 🐹 Go
+**Documentation**: See [`grammar-school-python`](https://github.com/Conceptual-Machines/grammar-school-python) for full Python documentation.
+
+### ⭐ Go Implementation
+
+**Repository:** [`grammar-school-go`](https://github.com/Conceptual-Machines/grammar-school-go)
 
 ```bash
-go get grammar-school/go/gs
+go get github.com/Conceptual-Machines/grammar-school-go
 ```
 
 ```go
-type MyDSL struct{}
+import "github.com/Conceptual-Machines/grammar-school-go/gs"
 
-func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
-    name := args["name"].Str
-    return []gs.Action{{
-        Kind: "greet",
-        Payload: map[string]interface{}{"name": name},
-    }}, ctx, nil
-}
+engine, err := gs.NewEngine(grammar, dslInstance, nil)
+err = engine.Execute(ctx, dslCode)
 ```
 
-## 📖 Documentation
+**Documentation**: See [`grammar-school-go`](https://github.com/Conceptual-Machines/grammar-school-go) for full Go documentation.
 
-**[Full Documentation](https://conceptual-machines.github.io/grammar-school/)** - Complete API reference, guides, and examples
+## ✨ Features
 
-- [Python API Reference](https://conceptual-machines.github.io/grammar-school/python/)
-- [Go API Reference](https://conceptual-machines.github.io/grammar-school/go/)
-- [Examples](https://conceptual-machines.github.io/grammar-school/examples/)
-- [Contributing Guide](https://conceptual-machines.github.io/grammar-school/contributing/)
+- **Simple API** - Define DSLs with just a few `@method` methods
+- **Method Chaining** - Natural syntax: `track(name="A").add_clip(start=0)`
+- **LLM-Friendly** - Use grammars as CFG constraints for GPT-5 and other LLMs
+- **Functional Programming** - Implement your own functional methods for your domain
+- **Multi-Language** - Consistent API across Python and Go
+- **Well-Tested** - Comprehensive test suite with 80%+ coverage
+- **Well-Documented** - Full API docs and examples
 
-## 💡 Examples
+## Quick Links
 
-See the `python/examples/` and `go/examples/` directories for complete DSL implementations:
+- **Python**: [`grammar-school-python`](https://github.com/Conceptual-Machines/grammar-school-python) - Full Python implementation
+- **Go**: [`grammar-school-go`](https://github.com/Conceptual-Machines/grammar-school-go) - Full Go implementation
+- **Documentation**: [GitHub Pages](https://conceptual-machines.github.io/grammar-school/)
+- **Spec**: See [`SPEC.md`](SPEC.md) for the full specification
 
-- **Music DSL** - Create tracks and clips with method chaining
-- **GPT-5 Integration** - Use Grammar School with OpenAI's GPT-5 using CFG constraints
-- **Functional DSL** - Example showing how to implement functional methods
+## Examples
 
-## 🧠 Core Concepts
+### Python Examples
 
-All implementations follow the same conceptual design:
+See [`grammar-school-python/examples`](https://github.com/Conceptual-Machines/grammar-school-python/tree/main/examples) for:
+- GPT integration examples
+- Music DSL example
+- Grammar builder examples
+- CFG configuration examples
 
-1. **DSL Program**: Plain string input (typically LLM-generated)
-2. **AST**: Abstract Syntax Tree (CallChain → Call → Arg → Value)
-3. **Methods**: Direct execution - methods contain their implementation
-4. **Pipeline**: Parse → Interpret → Execute (methods run directly)
+### Go Examples
 
-See [SPEC.md](./SPEC.md) for the complete specification.
+See [`grammar-school-go/examples`](https://github.com/Conceptual-Machines/grammar-school-go/tree/main/examples) for:
+- Functional DSL example
+- Music DSL example
 
-## 📁 Repository Structure
+## Documentation
 
-```
-grammar-school/
-  README.md          # This file
-  SPEC.md            # Shared conceptual specification
+- **Python Docs**: [`grammar-school-python`](https://github.com/Conceptual-Machines/grammar-school-python)
+- **Go Docs**: [`grammar-school-go`](https://github.com/Conceptual-Machines/grammar-school-go)
+- **Specification**: [`SPEC.md`](SPEC.md)
+- **Contributing**: See individual language repositories for contribution guidelines
 
-  python/            # Python implementation
-    grammar_school/
-    examples/
+## Contributing
 
-  go/                # Go implementation
-    gs/
-    examples/
+Contributions welcome! Please see individual language repositories for contribution guidelines:
+- [Python Contributing](https://github.com/Conceptual-Machines/grammar-school-python/blob/main/CONTRIBUTING.md)
+- [Go Contributing](https://github.com/Conceptual-Machines/grammar-school-go/blob/main/CONTRIBUTING.md)
 
-  docs/              # Additional documentation
-```
+## License
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - See LICENSE file for details.
