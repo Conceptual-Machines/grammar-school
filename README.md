@@ -13,7 +13,7 @@ Grammar School was partly inspired by Anthropic's article on [Code execution wit
 
 **A lightweight framework for building tiny LLM-friendly Domain-Specific Languages (DSLs)**
 
-[Features](#features) • [Quick Start](#quick-start) • [Documentation](#documentation) • [Examples](#examples)
+[Features](#features) • [Language Implementations](#language-implementations) • [Documentation](#documentation) • [Examples](#examples)
 
 </div>
 
@@ -44,15 +44,15 @@ pip install grammar-school
 ```
 
 ```python
-from grammar_school import Grammar, Engine, method
+from grammar_school import Grammar, method
 
 class MyGrammar(Grammar):
     @method
     def my_method(self, arg: str):
         ...
 
-engine = Engine(grammar_str, MyGrammar())
-engine.execute(dsl_code)
+grammar = MyGrammar()
+grammar.execute(dsl_code)
 ```
 
 **Documentation**: See [`grammar-school-python`](https://github.com/Conceptual-Machines/grammar-school-python) for full Python documentation.
