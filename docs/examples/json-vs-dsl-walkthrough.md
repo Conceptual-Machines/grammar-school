@@ -2,6 +2,9 @@
 
 This walkthrough demonstrates the fundamental difference between JSON/structured output and Domain-Specific Language (DSL) approaches when integrating LLMs with external data sources.
 
+!!! note "Inspiration"
+    This walkthrough and the Grammar School library were partly inspired by Anthropic's article on [Code execution with MCP: Building more efficient agents](https://www.anthropic.com/engineering/code-execution-with-mcp). The article explores how code execution enables agents to interact with MCP servers more efficiently by writing code instead of making direct tool calls, reducing token consumption and improving scalability.
+
 ## Overview
 
 When building LLM applications that need to interact with data sources, developers have traditionally relied on **structured output** approaches. This typically involves:
@@ -61,9 +64,7 @@ class FilteredUsersResponse(BaseModel):
 
     users: list[User]
     count: int
-```
 
-```python
     try:
         # LLM calls MCP via tools - MCP server MUST be publicly accessible
         response = client.responses.parse(
@@ -95,6 +96,7 @@ class FilteredUsersResponse(BaseModel):
         print("Error:", e)
 ```
 **What happens:**
+
 1. LLM receives prompt
 2. LLM calls MCP server (public URL required)
 3. MCP returns 100 users → **flows into LLM context**
@@ -221,6 +223,7 @@ class DataProcessingDSL(Grammar):
 run_terminal_cmd
 
 **What happens:**
+
 1. LLM receives prompt
 2. LLM generates DSL code (example shown below)
 3. Runtime executes DSL code
@@ -388,6 +391,128 @@ Requirements:
 
 !!! note "MCP Not Required"
     While this example uses MCP for convenience, the DSL approach works with **any REST API or HTTP endpoint**. The runtime can call any service that your application has access to - it doesn't need to be MCP-compatible. This gives you maximum flexibility in choosing your backend services.
+
+## Effort Comparison: Developer, LLM, Runtime, and MCP
+
+This section breaks down where effort is required in each approach across four dimensions: developer effort, LLM effort, runtime effort, and MCP/server effort.
+
+### Structured Output (JSON) Approach
+
+| Effort Type | Description | Examples |
+|------------|-------------|----------|
+| **Developer Effort** | Low - Define data models only | Create Pydantic models (`User`, `FilteredUsersResponse`) |
+| **LLM Effort** | High - Processes all data in context | LLM receives 100 users, filters them, generates JSON response |
+| **Runtime Effort** | Minimal - Just parse response | Parse JSON from LLM response |
+| **MCP/Server Effort** | Medium - Handles LLM requests | MCP server receives requests from LLM, returns data, must be publicly accessible |
+
+**Effort Distribution:**
+- Developer: ~5% (data models)
+- LLM: ~85% (data processing, reasoning, generation)
+- Runtime: ~5% (parsing)
+- MCP/Server: ~5% (handling LLM requests)
+
+### DSL Approach
+
+| Effort Type | Description | Examples |
+|------------|-------------|----------|
+| **Developer Effort** | Medium - Write runtime implementation | Define grammar, implement `fetch_users()`, `filter()`, `send_email()` methods |
+| **LLM Effort** | Low - Only generates code | LLM generates `fetch_users(limit=100).filter().send_email()` |
+| **Runtime Effort** | High - Parses AST and executes DSL code | Runtime parses DSL into AST, executes code, calls MCP, processes data, handles errors, manages state |
+| **MCP/Server Effort** | Medium - Handles runtime requests | MCP server receives requests from runtime (can be local/private), returns data |
+
+**Effort Distribution:**
+- Developer: ~30% (grammar + runtime code)
+- LLM: ~20% (code generation only)
+- Runtime: ~35% (AST parsing, code execution, data processing, state management)
+- MCP/Server: ~15% (handling runtime requests)
+
+### Comparison Summary
+
+| Aspect | Structured Output | DSL |
+|--------|------------------|-----|
+| **Developer writes** | Data models | Grammar + Runtime code |
+| **LLM does** | Data processing + Generation | Code generation only |
+| **Runtime does** | Parse JSON | Parse AST + Execute DSL code + Process data + Manage state |
+| **MCP/Server does** | Handle LLM requests (public) | Handle runtime requests (can be private) |
+| **Best for** | Quick prototypes, small datasets | Production systems, large datasets |
+
+**Key Insight:** Structured output shifts effort to the LLM (which processes data), while DSL shifts effort to the developer (who writes runtime code) and runtime (which executes and processes data). The runtime in DSL does more work than the developer, handling execution, data processing, and state management. This trade-off makes DSL more efficient at scale because the LLM doesn't process data.
+
+## Developer Effort Comparison
+
+### Structured Output (JSON)
+
+**Setup Requirements:**
+- Define Pydantic models (data schemas)
+- Deploy MCP server to public URL
+- Configure API authentication
+
+**Code Required:**
+- Data models only (e.g., `User`, `FilteredUsersResponse`)
+- Minimal boilerplate for API calls
+
+**Example:**
+```python
+class User(BaseModel):
+    name: str
+    age: int
+    email: str
+
+class FilteredUsersResponse(BaseModel):
+    users: list[User]
+    count: int
+
+# That's it! The LLM handles the rest via MCP tools.
+```
+
+### DSL Approach
+
+**Setup Requirements:**
+- Define grammar (syntax rules)
+- Write runtime implementation (verbs/methods)
+- Implement data processing logic
+- Handle MCP/API calls in runtime
+
+**Code Required:**
+- Grammar definition
+- Runtime class with method implementations
+- Data processing logic
+- Error handling
+- API/MCP integration code
+
+**Example:**
+```python
+class DataProcessingDSL(Grammar):
+    def __init__(self, mcp_local_url: str = "http://localhost:8000"):
+        super().__init__()
+        self.users: list[dict] = []
+        self.filtered_users: list[dict] = []
+        self.mcp_local_url = mcp_local_url
+
+    @method
+    def fetch_users(self, limit: int = 10):
+        # Runtime implementation - you write this
+        mcp_url = f"{self.mcp_local_url}/mcp"
+        mcp_data = call_mcp_local(mcp_url, limit=limit)
+        self.users = mcp_data.get("users", [])
+        return self
+
+    @method
+    def filter(self, *args, **kwargs):
+        # Filter logic - you write this
+        self.filtered_users = [u for u in self.users if u.get("age", 0) > 25]
+        return self
+
+    @method
+    def send_email(self, recipients=None, template="notification"):
+        # Email sending logic - you write this
+        # ... implementation ...
+        return self
+```
+
+**Key Difference:**
+- **Structured Output**: Define data models → LLM handles execution
+- **DSL**: Define grammar + write runtime code → You control execution
 
 ## When to Use Each Approach
 
