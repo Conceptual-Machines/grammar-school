@@ -143,6 +143,7 @@ class DataProcessingDSL(Grammar):
             print(f"  [Runtime] Sending email to {len(emails)} recipients via MCP (local)")
         except Exception as e:
             print(f"  [Runtime] Email send failed: {e}")
+        return self
 ```
 
 ```python
