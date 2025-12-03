@@ -48,13 +48,51 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 ### JSON Approach Implementation
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/structured_output.py:15:28"
+class User(BaseModel):
+    """User model for structured output."""
+
+    name: str
+    age: int
+    email: str
+
+
+class FilteredUsersResponse(BaseModel):
+    """Response model for filtered users."""
+
+    users: list[User]
+    count: int  # Add this line
+    count: int
 ```
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/structured_output.py:63:77"
+    try:
+        # LLM calls MCP via tools - MCP server MUST be publicly accessible
+        response = client.responses.parse(
+            model=model,
+            input=[
+                {"role": "system", "content": "You are a data processing assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            text_format=FilteredUsersResponse,
+            tools=[
+                {
+                    "type": "mcp",
+                    "server_label": "user_database",
+                    "server_description": "A database MCP server for fetching and managing users.",
+                    "server_url": f"{mcp_public_url}/mcp",  # MUST be public URL
+                    "require_approval": "never",
+                }
+            ],
+        )
+        # ... rest of the code handles response parsing and error handling ...
 ```
 
+                    "require_approval": "never",
+                }
+            ],
+        )
+    except Exception as e:
+        print("Error:", e)
 **What happens:**
 1. LLM receives prompt
 2. LLM calls MCP server (public URL required)
@@ -65,20 +103,212 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 ### DSL Approach Implementation
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/domain_specific_language.py:58:106"
+class DataProcessingDSL(Grammar):
+    """DSL for data processing - runtime handles MCP calls."""
+
+    def __init__(self, mcp_local_url: str = "http://localhost:8000"):
+        super().__init__()
+        self.users: list[dict] = []
+        self.filtered_users: list[dict] = []
+        self.mcp_local_url = mcp_local_url
+
+    @method
+    def fetch_users(self, limit: int = 10):
+        """
+        Fetch users - runtime calls MCP server directly.
+        MCP can be local/private because runtime calls it, not LLM.
+        """
+        # Runtime calls MCP directly (can be localhost or private endpoint)
+        mcp_url = f"{self.mcp_local_url}/mcp"
+        mcp_data = call_mcp_local(mcp_url, limit=limit)
+        self.users = mcp_data.get("users", [])
+        print(f"  [Runtime] Fetched {len(self.users)} users from MCP (local)")
+        return self
+
+    @method
+    def filter(self, *args, users=None, condition=None, **kwargs):  # noqa: ARG002
+        """Filter users - simplified for basic grammar (no expressions)."""
+        # With basic grammar, we can't parse expressions like "age > 25"
+        # So we hardcode the filter logic in runtime
+        # In production, you'd use advanced grammar with expressions
+        # Handle both positional and keyword arguments (including _positional from runtime)
+        # Ignore any unexpected kwargs (like _positional from interpreter)
+        self.filtered_users = [u for u in self.users if u.get("age", 0) > 25]
+        print(f"  [Runtime] Filtered to {len(self.filtered_users)} users")
+        return self
+
+    @method
+    def send_email(self, recipients=None, template="notification"):
+        """Send email - runtime calls MCP directly."""
+        if recipients is None:
+            recipients = self.filtered_users
+        emails = [u["email"] for u in recipients if isinstance(u, dict) and "email" in u]
+
+        # Runtime calls MCP directly (can be localhost - no public URL needed!)
+        try:
+            mcp_url = f"{self.mcp_local_url}/mcp"
+            asyncio.run(_call_mcp_send_email_local(mcp_url, emails, template))
+            print(f"  [Runtime] Sending email to {len(emails)} recipients via MCP (local)")
+        except Exception as e:
+            print(f"  [Runtime] Email send failed: {e}")
+        return self
+        return self
 ```
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/domain_specific_language.py:140:195"
+    # Measure latency
+    start_time = time.time()
+
+    try:
+        # Use CFG tool to generate DSL code
+        response = client.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": "You are a data processing assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            text={"format": {"type": "text"}},
+            tools=[
+                {
+                    "type": "custom",
+                    "name": "data_processing_dsl",
+                    "description": (
+                        "Executes data processing operations using Grammar School DSL. "
+                        "Available verbs: fetch_users(limit), filter(users, condition), send_email(recipients, template). "
+                        "YOU MUST REASON HEAVILY ABOUT THE QUERY AND MAKE SURE IT OBEYS THE GRAMMAR."
+                    ),
+                    "format": {
+                        "type": "grammar",
+                        "syntax": "lark",
+                        "definition": grammar_def,
+                    },
+                }
+            ],
+        )
+
+        # Extract DSL code from response
+        dsl_code = None
+        for item in response.output:
+            if hasattr(item, "type") and item.type == "custom_tool_call":
+                dsl_code = item.input
+                break
+
+        if not dsl_code:
+            # Fallback: try output_text
+            dsl_code = getattr(response, "output_text", None)
+
+        usage = response.usage
+
+        if dsl_code:
+            print(f"\n✓ Generated DSL code: {dsl_code}")
+            print("  Token usage:")
+            print(f"    Input: {usage.input_tokens}")
+            print(f"    Output: {usage.output_tokens}")
+            print(f"    Total: {usage.total_tokens}")
+
+            print("\n  Executing DSL code in runtime...")
+            runtime_start = time.time()
+
+            # Execute DSL code in runtime
+            dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
+            dsl.execute(dsl_code)  # Add this line
+            dsl.execute(dsl_code)
+            # ... rest of the code handles timing and error handling ...
 ```
+<｜tool▁call▁begin｜>
+run_terminal_cmd
 
 **What happens:**
 1. LLM receives prompt
-2. LLM generates DSL code: `fetch_users(limit=100).filter().send_email()`
+2. LLM generates DSL code (example shown below)
 3. Runtime executes DSL code
-4. Runtime calls MCP server (can be localhost)
+4. Runtime calls external service (MCP server, REST API, or any HTTP endpoint - can be localhost)
 5. Runtime processes data locally
 6. **No data flows through LLM context**
+
+**Example Generated DSL Code:**
+
+For a prompt like "Fetch 100 users, filter to those older than 25, and send them notification emails", the LLM generates:
+
+```python
+fetch_users(limit=100).filter().send_email()
+```
+
+Or with more explicit parameters:
+
+```python
+fetch_users(limit=100).filter(condition="age > 25").send_email(template="notification")
+```
+
+This DSL code is then executed by the runtime, which handles all the actual data fetching, filtering, and email sending without exposing any data to the LLM context.
+
+!!! note "MCP vs REST API"
+    In this example, we use MCP (Model Context Protocol) for convenience, but **MCP is not required** for the DSL approach. The runtime can call any REST API, HTTP endpoint, or even local functions. The key advantage is that these services can be private/local, unlike the structured output approach where the LLM must be able to call them directly (requiring public URLs).
+
+## API Request Comparison
+
+The fundamental difference between the two approaches is visible in the OpenAI API request payloads. Here's a side-by-side comparison:
+
+### Structured Output (JSON) Request
+
+```python
+response = client.responses.parse(
+    model=model,
+    input=[...],
+    text_format=FilteredUsersResponse,  # Pydantic model → JSON schema
+    tools=[
+        {
+            "type": "mcp",
+            "server_label": "user_database",
+            "server_description": "A database MCP server...",
+            "server_url": f"{mcp_public_url}/mcp",  # MUST be public
+        }
+    ],
+)
+```
+
+**Key Points:**
+- **`text_format`**: Uses a Pydantic model (`FilteredUsersResponse`), which corresponds to `{"type": "json"}` with a JSON schema under the hood
+- **`tools`**: Defines MCP servers that the LLM can call to fetch data
+- **Data Flow**: MCP returns data → flows into LLM context → LLM generates JSON matching the schema
+
+### DSL (CFG) Request
+
+```python
+response = client.responses.create(
+    model=model,
+    input=[...],
+    text={"format": {"type": "text"}},  # Freeform text (default)
+    tools=[
+        {
+            "type": "custom",
+            "name": "data_processing_dsl",
+            "description": "Executes data processing operations...",
+            "format": {
+                "type": "grammar",
+                "syntax": "lark",
+                "definition": grammar_def,  # Full grammar definition
+            },
+        }
+    ],
+)
+```
+
+**Key Points:**
+- **`text`**: Uses freeform text format (default `{"type": "text"}`)
+- **`tools`**: Defines a custom tool with a grammar constraint (CFG) that enforces DSL syntax
+- **Data Flow**: LLM generates DSL code → runtime executes → runtime calls MCP (no data in LLM context)
+
+### Comparison Table
+
+| Aspect | Structured Output | DSL with CFG |
+|--------|------------------|--------------|
+| **API Method** | `responses.parse()` | `responses.create()` |
+| **Text Format** | `text_format=PydanticModel` → JSON schema | `text={"format": {"type": "text"}}` (freeform) |
+| **Tools Purpose** | Define MCP servers for LLM to call | Define grammar constraints for code generation |
+| **Tool Type** | `"type": "mcp"` | `"type": "custom"` with `"format": {"type": "grammar"}` |
+| **Grammar Overhead** | None (uses JSON schema) | ~2,000+ tokens (full grammar definition) |
+| **Data in Context** | Yes (all data from MCP flows through) | No (only instructions, not data) |
 
 ## Performance Comparison
 
@@ -91,7 +321,16 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 | 1,000 | 27,111      | 2,662      | **90.2%** |
 | 10,000| 254,791     | 3,108      | **98.8%** |
 
-**Key Insight**: JSON tokens grow linearly because all data flows through LLM context. DSL tokens remain constant because only instructions (not data) are in context.
+**Key Insights**:
+
+1. **At Low Scale (10 users)**: JSON wins because the DSL approach includes the full grammar definition in the LLM context. This grammar overhead (~2,000+ tokens) exceeds the small amount of data (10 users) that would flow through JSON.
+
+2. **At Scale (100+ users)**: DSL becomes dramatically more efficient because:
+   - The grammar definition is a **one-time cost** that doesn't grow with data size
+   - JSON tokens grow **linearly** because all data flows through LLM context
+   - DSL tokens remain **constant** because only instructions (not data) are in context
+
+3. **The Crossover Point**: Around 100 users, the grammar overhead is amortized and DSL's constant token usage becomes more efficient than JSON's linear growth.
 
 ### Latency
 
@@ -130,18 +369,21 @@ Requirements:
 
 ```yaml
 Requirements:
-  - MCP servers: Can be local/private
-  - Authentication: Simple function calls
+  - External services: Can be local/private (REST API, MCP, or any HTTP endpoint)
+  - Authentication: Handled by runtime (not LLM)
   - Network: Local network or VPN
   - Security: Keep services private
   - Cost: Lower token usage = lower costs
 ```
 
 **Example Setup:**
-- Run MCP server on localhost: `http://localhost:8000`
+- Run service on localhost: `http://localhost:8000` (REST API, MCP, or any HTTP endpoint)
 - Or deploy to private network/VPN
 - No public exposure needed
 - Pay only for instruction generation tokens
+
+!!! note "MCP Not Required"
+    While this example uses MCP for convenience, the DSL approach works with **any REST API or HTTP endpoint**. The runtime can call any service that your application has access to - it doesn't need to be MCP-compatible. This gives you maximum flexibility in choosing your backend services.
 
 ## When to Use Each Approach
 
@@ -152,9 +394,11 @@ Requirements:
 - ✅ You need LLM reasoning on the data
 - ✅ Public APIs are acceptable
 - ✅ One-time queries
+- ✅ Latency is not critical
 
 ### Use DSL When:
 
+- ✅ **Latency is critical** - DSL provides more consistent and often faster response times, especially at scale
 - ✅ Large datasets (> 100 items)
 - ✅ Complex data processing pipelines
 - ✅ Data privacy is important
@@ -167,18 +411,19 @@ Requirements:
 The complete comparison example is available in `python/examples/json_vs_dsl_comparison/`:
 
 ```bash
---8<-- "../python/examples/json_vs_dsl_comparison/README.md:27:32"
+cd python
+python examples/json_vs_dsl_comparison/comparison.py
 ```
 
 For detailed setup instructions, see the [comparison README](../python/examples/json_vs_dsl_comparison/README.md).
 
 ## Key Takeaways
 
-1. **Token Efficiency**: DSL becomes more efficient as data size increases (threshold ~100 items)
+1. **Latency**: DSL provides more consistent and often faster response times, especially at scale - **critical for latency-sensitive applications**
 
-2. **Infrastructure**: JSON requires public services; DSL can use private/local services
+2. **Token Efficiency**: DSL becomes more efficient as data size increases (threshold ~100 items)
 
-3. **Latency**: DSL latency is more consistent and often faster at scale
+3. **Infrastructure**: JSON requires public services; DSL can use private/local services
 
 4. **Cost**: DSL significantly reduces token costs for large datasets (up to 98.8% savings)
 

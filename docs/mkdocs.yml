@@ -36,12 +36,13 @@ theme:
     - content.code.annotate
 
 markdown_extensions:
+  - pymdownx.snippets:
+      base_path: ..
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
