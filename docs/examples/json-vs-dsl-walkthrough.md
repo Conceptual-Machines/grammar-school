@@ -102,6 +102,9 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 | 1,000 | 34.44s       | 21.06s      | **DSL 1.6x faster** |
 | 10,000| 52.93s       | 30.32s      | **DSL 1.7x faster** |
 
+!!! note "Latency Variability"
+    LLM latency can vary significantly between calls due to factors like model load, network conditions, and token generation complexity. However, we can observe a clear pattern: **DSL latency remains relatively constant** (21-30s range) regardless of data size, while JSON latency shows more variability and tends to increase with larger datasets. This consistency in DSL is because the LLM only generates code (constant complexity), while runtime execution happens locally and doesn't depend on LLM processing time.
+
 **Key Insight**: At scale, DSL latency is more consistent and often faster because data doesn't need to flow through the LLM.
 
 ## Infrastructure Requirements
