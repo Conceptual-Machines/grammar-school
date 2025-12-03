@@ -6,7 +6,10 @@ from grammar_school.ast import Arg, Call, CallChain, Value
 from grammar_school.smart_transformer import SmartTransformer
 
 DEFAULT_GRAMMAR = """
-start: call_chain
+start: statement+
+
+// Statement is a call chain (which can be a single call or multiple chained calls)
+statement: call_chain
 
 call_chain: call (DOT call)*
 call: IDENTIFIER "(" args? ")"
@@ -39,7 +42,30 @@ BOOL: "true" | "false"
 class ASTTransformer(Transformer):
     """Transforms Lark parse tree into Grammar School AST."""
 
-    def start(self, call_chain):
+    def start(self, *statements):
+        # If single statement, return it directly (backward compatibility)
+        if len(statements) == 1:
+            statement = statements[0]
+            # If it's already a CallChain, return it
+            if isinstance(statement, CallChain):
+                return statement
+            # If it's a single Call, wrap it in a CallChain
+            if isinstance(statement, Call):
+                return CallChain(calls=[statement])
+            return statement
+
+        # Multiple statements - combine all calls into one CallChain
+        all_calls = []
+        for statement in statements:
+            if isinstance(statement, CallChain):
+                all_calls.extend(statement.calls)
+            elif isinstance(statement, Call):
+                all_calls.append(statement)
+        return CallChain(calls=all_calls)
+
+    def statement(self, call_chain):
+        # Statement is always a call_chain (which can contain one or more calls)
+        # Just return the call_chain as-is
         return call_chain
 
     def call_chain(self, *calls):
@@ -159,7 +185,7 @@ class LarkBackend:
         if isinstance(result, Call):
             return CallChain(calls=[result])
         # Fallback: return empty CallChain
-        return CallChain(calls=[])  # type: ignore[no-any-return]
+        return CallChain(calls=[])
 
     @staticmethod
     def clean_grammar_for_cfg(grammar: str) -> str:

@@ -186,3 +186,54 @@ class TestGrammar:
         assert len(grammar.clips) == 1
         assert grammar.clips[0]["start"] == 0
         assert grammar.clips[0]["end"] == 10
+
+    def test_grammar_multiline_statements(self):
+        """Test grammar with multiline statements."""
+
+        class TestGrammar(Grammar):
+            def __init__(self):
+                super().__init__()
+                self.tracks = []
+                self.clips = []
+
+            @verb
+            def track(self, name):
+                self.tracks.append(name)
+
+            @verb
+            def add_clip(self, start, length):
+                self.clips.append({"start": start, "length": length})
+
+        grammar = TestGrammar()
+        # Multiline DSL code
+        code = """track(name="Drums")
+add_clip(start=0, length=8)
+add_clip(start=8, length=8)"""
+        grammar.execute(code)
+
+        assert len(grammar.tracks) == 1
+        assert grammar.tracks[0] == "Drums"
+        assert len(grammar.clips) == 2
+        assert grammar.clips[0]["start"] == 0
+        assert grammar.clips[0]["length"] == 8
+        assert grammar.clips[1]["start"] == 8
+        assert grammar.clips[1]["length"] == 8
+
+    def test_grammar_multiline_backward_compatibility(self):
+        """Test that single-line call chains still work (backward compatibility)."""
+
+        class TestGrammar(Grammar):
+            def __init__(self):
+                super().__init__()
+                self.messages = []
+
+            @verb
+            def greet(self, name):
+                self.messages.append(f"greet:{name}")
+
+        grammar = TestGrammar()
+        # Single line should still work
+        grammar.execute('greet(name="World")')
+
+        assert len(grammar.messages) == 1
+        assert grammar.messages[0] == "greet:World"

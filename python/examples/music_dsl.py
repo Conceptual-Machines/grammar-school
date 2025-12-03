@@ -43,16 +43,29 @@ def main():
     """Example usage of the Music DSL."""
     grammar = MusicGrammar()
 
+    # Single line (method chaining)
     code = 'track(name="Drums").add_clip(start=0, length=8)'
     print(f"Code: {code}")
     print("\nExecuting:")
     grammar.execute(code)
 
     print("\n" + "=" * 50)
-    code2 = 'track(name="FX", color="blue").mute()'
-    print(f"Code: {code2}")
+    # Multiline (separate statements)
+    code2 = """track(name="FX", color="blue")
+add_clip(start=0, length=4)
+mute()"""
+    print(f"Code:\n{code2}")
     print("\nExecuting:")
     grammar.execute(code2)
+
+    print("\n" + "=" * 50)
+    # Another multiline example
+    code3 = """track(name="Bass")
+add_clip(start=0, length=8)
+add_clip(start=8, length=8)"""
+    print(f"Code:\n{code3}")
+    print("\nExecuting:")
+    grammar.execute(code3)
 
     print("\n" + "=" * 50)
     print("Final state:")

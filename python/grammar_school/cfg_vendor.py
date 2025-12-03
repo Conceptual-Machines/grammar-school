@@ -160,7 +160,7 @@ class OpenAICFGProvider(CFGProvider):
         if client is None:
             client = OpenAI()
 
-        return client.responses.create(
+        return client.responses.create(  # type: ignore[call-overload]
             model=model,
             input=prompt,
             text=text_format,
@@ -172,7 +172,7 @@ class OpenAICFGProvider(CFGProvider):
         """Extract DSL code from OpenAI response."""
         for item in response.output:
             if hasattr(item, "type") and item.type == "custom_tool_call":
-                return item.input
+                return item.input  # type: ignore[no-any-return]
         return None
 
 

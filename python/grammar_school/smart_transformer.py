@@ -269,9 +269,31 @@ class SmartTransformer(Transformer):
         return Value(kind="function", value=func_name)
 
     # Explicit methods for default grammar (for backward compatibility and performance)
-    def start(self, call_chain):
-        """Handle start rule - default grammar."""
-        return call_chain
+    def start(self, *statements):
+        """
+        Handle start rule with multiple statements.
+
+        Combines all statements into a single CallChain.
+        """
+        # If single statement, return it directly (backward compatibility)
+        if len(statements) == 1:
+            statement = statements[0]
+            # If it's already a CallChain, return it
+            if isinstance(statement, CallChain):
+                return statement
+            # If it's a single Call, wrap it in a CallChain
+            if isinstance(statement, Call):
+                return CallChain(calls=[statement])
+            return statement
+
+        # Multiple statements - combine all calls into one CallChain
+        all_calls = []
+        for statement in statements:
+            if isinstance(statement, CallChain):
+                all_calls.extend(statement.calls)
+            elif isinstance(statement, Call):
+                all_calls.append(statement)
+        return CallChain(calls=all_calls)
 
     def call_chain(self, *calls):
         """Handle call_chain rule - default grammar."""
