@@ -6,7 +6,11 @@ from grammar_school.ast import Arg, Call, CallChain, Value
 from grammar_school.smart_transformer import SmartTransformer
 
 DEFAULT_GRAMMAR = """
-start: call_chain
+start: statement+
+
+// Statement can be a call chain (method chaining) or a single call
+statement: call_chain
+         | call
 
 call_chain: call (DOT call)*
 call: IDENTIFIER "(" args? ")"
@@ -39,8 +43,31 @@ BOOL: "true" | "false"
 class ASTTransformer(Transformer):
     """Transforms Lark parse tree into Grammar School AST."""
 
-    def start(self, call_chain):
-        return call_chain
+    def start(self, *statements):
+        # If single statement, return it directly (backward compatibility)
+        if len(statements) == 1:
+            statement = statements[0]
+            # If it's already a CallChain, return it
+            if isinstance(statement, CallChain):
+                return statement
+            # If it's a single Call, wrap it in a CallChain
+            if isinstance(statement, Call):
+                return CallChain(calls=[statement])
+            return statement
+
+        # Multiple statements - combine all calls into one CallChain
+        all_calls = []
+        for statement in statements:
+            if isinstance(statement, CallChain):
+                all_calls.extend(statement.calls)
+            elif isinstance(statement, Call):
+                all_calls.append(statement)
+        return CallChain(calls=all_calls)
+
+    def statement(self, statement):
+        # Statement can be a call_chain or a single call
+        # Both are already transformed, just return as-is
+        return statement
 
     def call_chain(self, *calls):
         # Filter out DOT tokens - only keep Call objects
