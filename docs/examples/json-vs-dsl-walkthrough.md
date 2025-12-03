@@ -87,6 +87,12 @@ class FilteredUsersResponse(BaseModel):
         result = response.output_parsed
         usage = response.usage
         elapsed_time = time.time() - start_time
+
+        # Inspect MCP tool calls in the response
+        print("\n  MCP Tool Call Inspection:")
+        # ... MCP inspection code ...
+    except Exception as e:
+        print("Error:", e)
 ```
 **What happens:**
 1. LLM receives prompt
@@ -205,6 +211,13 @@ class DataProcessingDSL(Grammar):
 
             runtime_time = time.time() - runtime_start
             total_time = time.time() - start_time
+
+            print("\n  Latency:")
+            print(f"    LLM generation: {total_time - runtime_time:.2f}s")
+            print(f"    Runtime execution: {runtime_time:.2f}s")
+            print(f"    Total time: {total_time:.2f}s")
+    except Exception as e:
+        print("Error:", e)
 ```
 <｜tool▁call▁begin｜>
 run_terminal_cmd
