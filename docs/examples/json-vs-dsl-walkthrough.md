@@ -187,10 +187,6 @@ class DataProcessingDSL(Grammar):
                 dsl_code = item.input
                 break
 
-        if not dsl_code:
-            # Fallback: try output_text
-            dsl_code = getattr(response, "output_text", None)
-
         usage = response.usage
 
         if dsl_code:
