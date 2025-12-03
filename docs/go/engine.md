@@ -4,7 +4,7 @@ The Engine orchestrates parsing, interpretation, and execution in the Go impleme
 
 ## Overview
 
-The `Engine` is the main entry point for Grammar School in Go. It manages the parser, verb handlers, and execution flow.
+The `Engine` is the main entry point for Grammar School in Go. It manages the parser, method handlers, and execution flow.
 
 ## Creating an Engine
 

@@ -24,17 +24,14 @@ Complete API reference for the Grammar School Python implementation.
       show_root_heading: true
       show_source: true
 
-## Runtime Types
+## Method Decorators
 
-::: grammar_school.runtime.Action
+::: grammar_school.grammar.method
     options:
       show_root_heading: true
       show_source: true
 
-::: grammar_school.runtime.Runtime
-    options:
-      show_root_heading: true
-      show_source: true
+**Note:** The `Action` and `Runtime` types still exist internally for the two-layer architecture, but users don't need to interact with them directly when using the unified `@method` interface.
 
 ## Grammar
 
@@ -48,7 +45,7 @@ Complete API reference for the Grammar School Python implementation.
       show_root_heading: true
       show_source: true
 
-::: grammar_school.grammar.verb
+::: grammar_school.grammar.method
     options:
       show_root_heading: true
       show_source: true

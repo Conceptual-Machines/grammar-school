@@ -138,6 +138,6 @@ func (r *MusicRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
 ## Key Concepts Demonstrated
 
 1. **Method Chaining** - `track(...).add_clip(...).add_effect(...)`
-2. **Context Passing** - The `_context` parameter allows verbs to access previous actions
-3. **Action Composition** - Multiple actions can be returned from a single verb
+2. **State Management** - Methods can access and modify state via `self` attributes
+3. **Direct Execution** - Methods execute directly when called
 4. **Runtime State** - The runtime maintains state across action executions

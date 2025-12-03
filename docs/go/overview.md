@@ -1,6 +1,6 @@
 # Go API Overview
 
-The Go implementation of Grammar School uses reflection to automatically discover verb handlers.
+The Go implementation of Grammar School uses reflection to automatically discover method handlers.
 
 ## Quick Example
 

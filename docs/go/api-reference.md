@@ -108,13 +108,13 @@ type Runtime interface {
 }
 ```
 
-## VerbHandler
+## MethodHandler
 
 ```go
-type VerbHandler func(args Args, ctx *Context) ([]Action, *Context, error)
+type MethodHandler func(args Args) error
 ```
 
-Verb handlers must match this signature. The Engine uses reflection to automatically discover and register methods with this signature.
+Method handlers must match this signature. The Engine uses reflection to automatically discover and register methods with this signature. Methods execute directly - no Action return needed.
 
 ## OpenAI CFG Utilities
 
