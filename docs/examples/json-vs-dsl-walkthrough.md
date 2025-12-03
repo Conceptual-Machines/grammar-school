@@ -389,6 +389,47 @@ Requirements:
 !!! note "MCP Not Required"
     While this example uses MCP for convenience, the DSL approach works with **any REST API or HTTP endpoint**. The runtime can call any service that your application has access to - it doesn't need to be MCP-compatible. This gives you maximum flexibility in choosing your backend services.
 
+## Effort Comparison: Developer, LLM, and Runtime
+
+This section breaks down where effort is required in each approach across three dimensions: developer effort, LLM effort, and runtime effort.
+
+### Structured Output (JSON) Approach
+
+| Effort Type | Description | Examples |
+|------------|-------------|----------|
+| **Developer Effort** | Low - Define data models only | Create Pydantic models (`User`, `FilteredUsersResponse`) |
+| **LLM Effort** | High - Processes all data in context | LLM receives 100 users, filters them, generates JSON response |
+| **Runtime Effort** | Minimal - Just parse response | Parse JSON from LLM response |
+
+**Effort Distribution:**
+- Developer: ~5% (data models)
+- LLM: ~90% (data processing, reasoning, generation)
+- Runtime: ~5% (parsing)
+
+### DSL Approach
+
+| Effort Type | Description | Examples |
+|------------|-------------|----------|
+| **Developer Effort** | High - Write runtime implementation | Define grammar, implement `fetch_users()`, `filter()`, `send_email()` methods |
+| **LLM Effort** | Low - Only generates code | LLM generates `fetch_users(limit=100).filter().send_email()` |
+| **Runtime Effort** | Medium - Executes DSL code | Runtime parses DSL, calls MCP, processes data, handles errors |
+
+**Effort Distribution:**
+- Developer: ~60% (grammar + runtime code)
+- LLM: ~20% (code generation only)
+- Runtime: ~20% (execution, data processing)
+
+### Comparison Summary
+
+| Aspect | Structured Output | DSL |
+|--------|------------------|-----|
+| **Developer writes** | Data models | Grammar + Runtime code |
+| **LLM does** | Data processing + Generation | Code generation only |
+| **Runtime does** | Parse JSON | Execute DSL + Process data |
+| **Best for** | Quick prototypes, small datasets | Production systems, large datasets |
+
+**Key Insight:** Structured output shifts effort to the LLM (which processes data), while DSL shifts effort to the developer (who writes runtime code) and runtime (which executes it). This trade-off makes DSL more efficient at scale because the LLM doesn't process data.
+
 ## Developer Effort Comparison
 
 ### Structured Output (JSON)
