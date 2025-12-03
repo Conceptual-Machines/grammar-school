@@ -1,6 +1,6 @@
 """Grammar School - A lightweight framework for building tiny LLM-friendly DSLs."""
 
-from grammar_school.ast import Arg, Call, CallChain, Value
+from grammar_school.ast import Arg, Call, CallChain, Expression, PropertyAccess, Value
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 from grammar_school.cfg_vendor import (
     CFGProvider,
@@ -25,6 +25,7 @@ __all__ = [
     "Arg",
     "Call",
     "CallChain",
+    "Expression",
     "CFGProvider",
     "CFGVendor",  # Backward compatibility
     "DEFAULT_GRAMMAR",
@@ -35,6 +36,7 @@ __all__ = [
     "OpenAICFGVendor",  # Backward compatibility
     "LarkBackend",
     "OpenAICFG",
+    "PropertyAccess",
     "Runtime",
     "Value",
     "__version__",

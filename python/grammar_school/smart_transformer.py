@@ -4,7 +4,7 @@ from typing import Any
 
 from lark import Transformer, v_args
 
-from grammar_school.ast import Arg, Call, CallChain, Value
+from grammar_school.ast import Arg, Call, CallChain, Expression, PropertyAccess, Value
 
 
 @v_args(inline=True)
@@ -181,14 +181,14 @@ class SmartTransformer(Transformer):
                     if isinstance(arg, Arg):
                         args_dict[arg.name] = arg.value
                     else:
-                        # Convert to Value if needed
-                        if not isinstance(arg, Value):
+                        # Keep Expression, PropertyAccess, or Value as-is
+                        if not isinstance(arg, Value | Expression | PropertyAccess):
                             arg = self._create_value(arg)
                         args_dict[f"_positional_{positional_index}"] = arg
                         positional_index += 1
             else:
-                # Positional argument - convert to Value if needed
-                if not isinstance(child, Value):
+                # Positional argument - keep Expression, PropertyAccess, or Value as-is
+                if not isinstance(child, Value | Expression | PropertyAccess):
                     child = self._create_value(child)
                 args_dict[f"_positional_{positional_index}"] = child
                 positional_index += 1
@@ -208,8 +208,8 @@ class SmartTransformer(Transformer):
         # Return as list for compatibility, but could be made lazy
         return list(_iter_args())
 
-    def _create_arg(self, children: list) -> Arg | Value:
-        """Create an Arg (named) or return Value (positional)."""
+    def _create_arg(self, children: list) -> Arg | Value | Expression | PropertyAccess:
+        """Create an Arg (named) or return Value/Expression/PropertyAccess (positional)."""
         # Filter out = tokens
         filtered = [c for c in children if not (hasattr(c, "type") and c.type in ("=", "EQ"))]
 
@@ -217,13 +217,15 @@ class SmartTransformer(Transformer):
             # Named argument: IDENTIFIER = value
             name = str(filtered[0])
             value = filtered[1]
-            if not isinstance(value, Value):
+            # Keep Expression, PropertyAccess, or Value as-is
+            if not isinstance(value, Value | Expression | PropertyAccess):
                 value = self._create_value(value)
             return Arg(name=name, value=value)
         elif len(filtered) == 1:
             # Positional argument: just the value
             value = filtered[0]
-            if not isinstance(value, Value):
+            # Keep Expression, PropertyAccess, or Value as-is
+            if not isinstance(value, Value | Expression | PropertyAccess):
                 value = self._create_value(value)
             return value
         else:
@@ -321,3 +323,79 @@ class SmartTransformer(Transformer):
     def function_ref(self, identifier):
         """Handle function_ref rule - default grammar."""
         return self._create_function_ref([identifier])
+
+    # Expression handling methods
+    def expression(self, expr):
+        """Handle expression - pass through."""
+        return expr
+
+    def comparison(self, *parts):
+        """Handle comparison expressions: addition (comparison_op addition)*"""
+        if len(parts) == 1:
+            return parts[0]
+        # Build left-associative expression tree
+        result = parts[0]
+        for i in range(1, len(parts), 2):
+            if i + 1 < len(parts):
+                op = str(parts[i])
+                right = parts[i + 1]
+                result = Expression(operator=op, left=result, right=right)
+        return result
+
+    def comparison_op(self, op):
+        """Handle comparison operator."""
+        return str(op)
+
+    def addition(self, *parts):
+        """Handle addition expressions: multiplication (add_op multiplication)*"""
+        if len(parts) == 1:
+            return parts[0]
+        # Build left-associative expression tree
+        result = parts[0]
+        for i in range(1, len(parts), 2):
+            if i + 1 < len(parts):
+                op = str(parts[i])
+                right = parts[i + 1]
+                result = Expression(operator=op, left=result, right=right)
+        return result
+
+    def add_op(self, op):
+        """Handle addition operator."""
+        return str(op)
+
+    def multiplication(self, *parts):
+        """Handle multiplication expressions: atom (mul_op atom)*"""
+        if len(parts) == 1:
+            return parts[0]
+        # Build left-associative expression tree
+        result = parts[0]
+        for i in range(1, len(parts), 2):
+            if i + 1 < len(parts):
+                op = str(parts[i])
+                right = parts[i + 1]
+                result = Expression(operator=op, left=result, right=right)
+        return result
+
+    def mul_op(self, op):
+        """Handle multiplication operator."""
+        return str(op)
+
+    def atom(self, atom_value):
+        """Handle atom (base value)."""
+        # If it's already a Value, Expression, PropertyAccess, return as-is
+        if isinstance(atom_value, Value | Expression | PropertyAccess):
+            return atom_value
+        # Otherwise, convert token to Value using the generic method
+        return self._create_value(atom_value)
+
+    def property_access(self, *parts):
+        """Handle property access: IDENTIFIER (DOT IDENTIFIER)+"""
+        # Filter out DOT tokens
+        identifiers = [
+            str(part) for part in parts if not (hasattr(part, "type") and part.type == "DOT")
+        ]
+        if len(identifiers) < 2:
+            # Single identifier - return as Value
+            return Value(kind="identifier", value=identifiers[0])
+        # Multiple identifiers - property access
+        return PropertyAccess(object_name=identifiers[0], properties=identifiers[1:])

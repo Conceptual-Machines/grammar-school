@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from grammar_school.ast import CallChain, Value
+from grammar_school.ast import CallChain, Expression, PropertyAccess, Value
 
 
 class Interpreter:
@@ -55,14 +55,15 @@ class Interpreter:
             # Yield None to indicate execution (for compatibility)
             yield None
 
-    def _coerce_args(self, args: dict[str, Value]) -> dict[str, Any]:
+    def _coerce_args(self, args: dict[str, Value | Expression | PropertyAccess]) -> dict[str, Any]:
         """
-        Coerce Value objects to native Python types.
+        Coerce Value, Expression, or PropertyAccess objects to native Python types.
 
         Function references (kind="function") are resolved to actual function handlers
         if they exist in the method handlers, otherwise passed as string identifiers.
 
-        Positional arguments are extracted and passed in order as *args.
+        Expressions are evaluated to their result values.
+        PropertyAccess is resolved to the actual property value.
         """
         coerced = {}
         positional_args = []
@@ -85,26 +86,14 @@ class Interpreter:
             if name.startswith("_positional_"):
                 continue  # Already handled above
 
-            if value.kind == "function":
-                # Function reference - try to resolve to handler, otherwise pass as string
-                func_name = value.value
-                coerced[name] = self._method_handlers.get(func_name, func_name)
-            else:
-                coerced[name] = value.value
+            coerced[name] = self._evaluate_value(value)
 
         # Handle positional arguments - pass as *args if multiple, or single value if one
         if positional_values:
             # Coerce each positional value
             coerced_positionals = []
             for value in positional_values:
-                if value.kind == "function":
-                    func_name = value.value
-                    if func_name in self._method_handlers:
-                        coerced_positionals.append(self._method_handlers[func_name])
-                    else:
-                        coerced_positionals.append(func_name)
-                else:
-                    coerced_positionals.append(value.value)
+                coerced_positionals.append(self._evaluate_value(value))
 
             # If handler accepts *args, we need to pass them separately
             # For now, pass as _positional_0, _positional_1, etc. for backward compat
@@ -116,3 +105,107 @@ class Interpreter:
                 coerced["_positional"] = coerced_positionals
 
         return coerced
+
+    def _evaluate_value(self, value: Value | Expression | PropertyAccess) -> Any:
+        """
+        Evaluate a Value, Expression, or PropertyAccess to a Python value.
+
+        Args:
+            value: Value, Expression, or PropertyAccess to evaluate
+
+        Returns:
+            Python value (int, float, str, bool, etc.)
+        """
+        if isinstance(value, Expression):
+            return self._evaluate_expression(value)
+        elif isinstance(value, PropertyAccess):
+            return self._evaluate_property_access(value)
+        elif isinstance(value, Value):
+            if value.kind == "function":
+                # Function reference - try to resolve to handler, otherwise pass as string
+                func_name = value.value
+                return self._method_handlers.get(func_name, func_name)
+            else:
+                return value.value
+        else:
+            # Fallback for unknown types
+            return value
+
+    def _evaluate_expression(self, expr: Expression) -> Any:
+        """
+        Evaluate an expression to a Python value.
+
+        Args:
+            expr: Expression to evaluate
+
+        Returns:
+            Python value result of the expression
+        """
+        if expr.operator is None:
+            # Single value expression
+            return self._evaluate_value(expr.left)
+
+        # Binary operator expression
+        left_val = self._evaluate_value(expr.left)
+        right_val = self._evaluate_value(expr.right) if expr.right else None
+
+        # Evaluate based on operator
+        if expr.operator == "+":
+            return left_val + right_val
+        elif expr.operator == "-":
+            return left_val - right_val
+        elif expr.operator == "*":
+            return left_val * right_val
+        elif expr.operator == "/":
+            if right_val == 0:
+                raise ValueError("Division by zero is not allowed in Grammar School expressions.")
+            return left_val / right_val
+        elif expr.operator == "==":
+            return left_val == right_val
+        elif expr.operator == "!=":
+            return left_val != right_val
+        elif expr.operator == "<":
+            return left_val < right_val
+        elif expr.operator == ">":
+            return left_val > right_val
+        elif expr.operator == "<=":
+            return left_val <= right_val
+        elif expr.operator == ">=":
+            return left_val >= right_val
+        else:
+            raise ValueError(f"Unknown operator: {expr.operator}")
+
+    def _evaluate_property_access(self, prop: PropertyAccess) -> Any:
+        """
+        Evaluate property access like track.name.
+
+        Args:
+            prop: PropertyAccess to evaluate
+
+        Returns:
+            Python value of the property
+        """
+        # Get the object from DSL context
+        # For now, we'll look for it in the DSL instance attributes
+        # This is a simple implementation - users can override for more complex cases
+        obj = getattr(self.dsl, prop.object_name, None)
+        if obj is None:
+            # Try as a variable in a context dict if DSL has one
+            if hasattr(self.dsl, "_context") and isinstance(self.dsl._context, dict):
+                obj = self.dsl._context.get(prop.object_name)
+            if obj is None:
+                raise ValueError(f"Unknown object: {prop.object_name}")
+
+        # Navigate through properties
+        result = obj
+        for prop_name in prop.properties:
+            if hasattr(result, prop_name):
+                result = getattr(result, prop_name)
+            elif isinstance(result, dict):
+                result = result.get(prop_name)
+                if result is None:
+                    raise ValueError(f"Property '{prop_name}' not found in dict")
+            else:
+                raise ValueError(f"Property '{prop_name}' not found on {type(result).__name__}")
+
+        return result
