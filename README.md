@@ -33,6 +33,43 @@ Perfect for building:
 - **Workflow engines** - Chain operations with method chaining
 - **Domain-specific commands** - Music, graphics, data processing, etc.
 
+## Language Implementations
+
+### 🐍 Python Implementation
+
+**Repository:** [grammar-school-python](https://github.com/Conceptual-Machines/grammar-school-python)
+
+```bash
+pip install grammar-school
+```
+
+```python
+from grammar_school import Grammar, Engine, method
+
+class MyGrammar(Grammar):
+    @method
+    def my_method(self, arg: str):
+        ...
+
+engine = Engine(grammar_str, MyGrammar())
+engine.execute(dsl_code)
+```
+
+### ⭐ Go Implementation
+
+**Repository:** [grammar-school-go](https://github.com/Conceptual-Machines/grammar-school-go)
+
+```bash
+go get github.com/Conceptual-Machines/grammar-school-go
+```
+
+```go
+import "github.com/Conceptual-Machines/grammar-school-go/gs"
+
+engine, err := gs.NewEngine(grammar, dslInstance, nil)
+err = engine.Execute(ctx, dslCode)
+```
+
 ## ✨ Features
 
 - **Simple API** - Define DSLs with just a few `@method` methods
@@ -43,90 +80,16 @@ Perfect for building:
 - **Well-Tested** - Comprehensive test suite with 80%+ coverage
 - **Well-Documented** - Full API docs and examples
 
-## 🚀 Quick Start
+## Documentation
 
-### 🐍 Python
+- [Python Documentation](https://github.com/Conceptual-Machines/grammar-school-python)
+- [Go Documentation](https://github.com/Conceptual-Machines/grammar-school-go)
+- [Examples](https://github.com/Conceptual-Machines/grammar-school-python/tree/main/examples)
 
-```bash
-pip install grammar-school
-```
+## Contributing
 
-```python
-from grammar_school import Grammar, method
+Contributions welcome! Please see individual language repositories for contribution guidelines.
 
-class MyGrammar(Grammar):
-    @method
-    def greet(self, name):
-        print(f"Hello, {name}!")
+## License
 
-grammar = MyGrammar()
-grammar.execute('greet(name="World")')
-```
-
-### 🐹 Go
-
-```bash
-go get grammar-school/go/gs
-```
-
-```go
-type MyDSL struct{}
-
-func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
-    name := args["name"].Str
-    return []gs.Action{{
-        Kind: "greet",
-        Payload: map[string]interface{}{"name": name},
-    }}, ctx, nil
-}
-```
-
-## 📖 Documentation
-
-**[Full Documentation](https://conceptual-machines.github.io/grammar-school/)** - Complete API reference, guides, and examples
-
-- [Python API Reference](https://conceptual-machines.github.io/grammar-school/python/)
-- [Go API Reference](https://conceptual-machines.github.io/grammar-school/go/)
-- [Examples](https://conceptual-machines.github.io/grammar-school/examples/)
-- [Contributing Guide](https://conceptual-machines.github.io/grammar-school/contributing/)
-
-## 💡 Examples
-
-See the `python/examples/` and `go/examples/` directories for complete DSL implementations:
-
-- **Music DSL** - Create tracks and clips with method chaining
-- **GPT-5 Integration** - Use Grammar School with OpenAI's GPT-5 using CFG constraints
-- **Functional DSL** - Example showing how to implement functional methods
-
-## 🧠 Core Concepts
-
-All implementations follow the same conceptual design:
-
-1. **DSL Program**: Plain string input (typically LLM-generated)
-2. **AST**: Abstract Syntax Tree (CallChain → Call → Arg → Value)
-3. **Methods**: Direct execution - methods contain their implementation
-4. **Pipeline**: Parse → Interpret → Execute (methods run directly)
-
-See [SPEC.md](./SPEC.md) for the complete specification.
-
-## 📁 Repository Structure
-
-```
-grammar-school/
-  README.md          # This file
-  SPEC.md            # Shared conceptual specification
-
-  python/            # Python implementation
-    grammar_school/
-    examples/
-
-  go/                # Go implementation
-    gs/
-    examples/
-
-  docs/              # Additional documentation
-```
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - See LICENSE file for details.
