@@ -60,6 +60,7 @@ class FilteredUsersResponse(BaseModel):
     """Response model for filtered users."""
 
     users: list[User]
+    count: int  # Add this line
     count: int
 ```
 
