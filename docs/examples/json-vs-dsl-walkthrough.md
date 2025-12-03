@@ -48,11 +48,36 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 ### JSON Approach Implementation
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/structured_output.py:15:28"
+class User(BaseModel):
+    """User model for structured output."""
+
+    name: str
+    age: int
+    email: str
+
+
+class FilteredUsersResponse(BaseModel):
+    """Response model for filtered users."""
+
+    users: list[User]
 ```
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/structured_output.py:63:77"
+    try:
+        # LLM calls MCP via tools - MCP server MUST be publicly accessible
+        response = client.responses.parse(
+            model=model,
+            input=[
+                {"role": "system", "content": "You are a data processing assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            text_format=FilteredUsersResponse,
+            tools=[
+                {
+                    "type": "mcp",
+                    "server_label": "user_database",
+                    "server_description": "A database MCP server for fetching and managing users.",
+                    "server_url": f"{mcp_public_url}/mcp",  # MUST be public URL
 ```
 
 **What happens:**
@@ -65,11 +90,112 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 ### DSL Approach Implementation
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/domain_specific_language.py:58:106"
+class DataProcessingDSL(Grammar):
+    """DSL for data processing - runtime handles MCP calls."""
+
+    def __init__(self, mcp_local_url: str = "http://localhost:8000"):
+        super().__init__()
+        self.users: list[dict] = []
+        self.filtered_users: list[dict] = []
+        self.mcp_local_url = mcp_local_url
+
+    @method
+    def fetch_users(self, limit: int = 10):
+        """
+        Fetch users - runtime calls MCP server directly.
+        MCP can be local/private because runtime calls it, not LLM.
+        """
+        # Runtime calls MCP directly (can be localhost or private endpoint)
+        mcp_url = f"{self.mcp_local_url}/mcp"
+        mcp_data = call_mcp_local(mcp_url, limit=limit)
+        self.users = mcp_data.get("users", [])
+        print(f"  [Runtime] Fetched {len(self.users)} users from MCP (local)")
+        return self
+
+    @method
+    def filter(self, *args, users=None, condition=None, **kwargs):  # noqa: ARG002
+        """Filter users - simplified for basic grammar (no expressions)."""
+        # With basic grammar, we can't parse expressions like "age > 25"
+        # So we hardcode the filter logic in runtime
+        # In production, you'd use advanced grammar with expressions
+        # Handle both positional and keyword arguments (including _positional from runtime)
+        # Ignore any unexpected kwargs (like _positional from interpreter)
+        self.filtered_users = [u for u in self.users if u.get("age", 0) > 25]
+        print(f"  [Runtime] Filtered to {len(self.filtered_users)} users")
+        return self
+
+    @method
+    def send_email(self, recipients=None, template="notification"):
+        """Send email - runtime calls MCP directly."""
+        if recipients is None:
+            recipients = self.filtered_users
+        emails = [u["email"] for u in recipients if isinstance(u, dict) and "email" in u]
+
+        # Runtime calls MCP directly (can be localhost - no public URL needed!)
+        try:
+            mcp_url = f"{self.mcp_local_url}/mcp"
+            asyncio.run(_call_mcp_send_email_local(mcp_url, emails, template))
+            print(f"  [Runtime] Sending email to {len(emails)} recipients via MCP (local)")
+        except Exception as e:
+            print(f"  [Runtime] Email send failed: {e}")
 ```
 
 ```python
---8<-- "../python/examples/json_vs_dsl_comparison/domain_specific_language.py:140:195"
+    # Measure latency
+    start_time = time.time()
+
+    try:
+        # Use CFG tool to generate DSL code
+        response = client.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": "You are a data processing assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            text={"format": {"type": "text"}},
+            tools=[
+                {
+                    "type": "custom",
+                    "name": "data_processing_dsl",
+                    "description": (
+                        "Executes data processing operations using Grammar School DSL. "
+                        "Available verbs: fetch_users(limit), filter(users, condition), send_email(recipients, template). "
+                        "YOU MUST REASON HEAVILY ABOUT THE QUERY AND MAKE SURE IT OBEYS THE GRAMMAR."
+                    ),
+                    "format": {
+                        "type": "grammar",
+                        "syntax": "lark",
+                        "definition": grammar_def,
+                    },
+                }
+            ],
+        )
+
+        # Extract DSL code from response
+        dsl_code = None
+        for item in response.output:
+            if hasattr(item, "type") and item.type == "custom_tool_call":
+                dsl_code = item.input
+                break
+
+        if not dsl_code:
+            # Fallback: try output_text
+            dsl_code = getattr(response, "output_text", None)
+
+        usage = response.usage
+
+        if dsl_code:
+            print(f"\n✓ Generated DSL code: {dsl_code}")
+            print("  Token usage:")
+            print(f"    Input: {usage.input_tokens}")
+            print(f"    Output: {usage.output_tokens}")
+            print(f"    Total: {usage.total_tokens}")
+
+            print("\n  Executing DSL code in runtime...")
+            runtime_start = time.time()
+
+            # Execute DSL code in runtime
+            dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
 ```
 
 **What happens:**
@@ -91,7 +217,16 @@ Let's compare both approaches using a real-world scenario: fetching users, filte
 | 1,000 | 27,111      | 2,662      | **90.2%** |
 | 10,000| 254,791     | 3,108      | **98.8%** |
 
-**Key Insight**: JSON tokens grow linearly because all data flows through LLM context. DSL tokens remain constant because only instructions (not data) are in context.
+**Key Insights**:
+
+1. **At Low Scale (10 users)**: JSON wins because the DSL approach includes the full grammar definition in the LLM context. This grammar overhead (~2,000+ tokens) exceeds the small amount of data (10 users) that would flow through JSON.
+
+2. **At Scale (100+ users)**: DSL becomes dramatically more efficient because:
+   - The grammar definition is a **one-time cost** that doesn't grow with data size
+   - JSON tokens grow **linearly** because all data flows through LLM context
+   - DSL tokens remain **constant** because only instructions (not data) are in context
+
+3. **The Crossover Point**: Around 100 users, the grammar overhead is amortized and DSL's constant token usage becomes more efficient than JSON's linear growth.
 
 ### Latency
 
@@ -167,7 +302,8 @@ Requirements:
 The complete comparison example is available in `python/examples/json_vs_dsl_comparison/`:
 
 ```bash
---8<-- "../python/examples/json_vs_dsl_comparison/README.md:27:32"
+cd python
+python examples/json_vs_dsl_comparison/comparison.py
 ```
 
 For detailed setup instructions, see the [comparison README](../python/examples/json_vs_dsl_comparison/README.md).
