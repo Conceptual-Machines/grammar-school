@@ -270,6 +270,7 @@ response = client.responses.parse(
 ```
 
 **Key Points:**
+
 - **`text_format`**: Uses a Pydantic model (`FilteredUsersResponse`), which corresponds to `{"type": "json"}` with a JSON schema under the hood
 - **`tools`**: Defines MCP servers that the LLM can call to fetch data
 - **Data Flow**: MCP returns data → flows into LLM context → LLM generates JSON matching the schema
@@ -297,6 +298,7 @@ response = client.responses.create(
 ```
 
 **Key Points:**
+
 - **`text`**: Uses freeform text format (default `{"type": "text"}`)
 - **`tools`**: Defines a custom tool with a grammar constraint (CFG) that enforces DSL syntax
 - **Data Flow**: LLM generates DSL code → runtime executes → runtime calls MCP (no data in LLM context)
