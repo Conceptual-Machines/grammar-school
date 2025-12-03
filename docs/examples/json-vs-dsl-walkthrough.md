@@ -60,6 +60,7 @@ class FilteredUsersResponse(BaseModel):
     """Response model for filtered users."""
 
     users: list[User]
+    count: int
 ```
 
 ```python
@@ -78,6 +79,10 @@ class FilteredUsersResponse(BaseModel):
                     "server_label": "user_database",
                     "server_description": "A database MCP server for fetching and managing users.",
                     "server_url": f"{mcp_public_url}/mcp",  # MUST be public URL
+                    "require_approval": "never",
+                }
+            ],
+        )
 ```
 
 **What happens:**
@@ -196,7 +201,10 @@ class DataProcessingDSL(Grammar):
 
             # Execute DSL code in runtime
             dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
+            dsl.execute(dsl_code)
 ```
+<｜tool▁call▁begin｜>
+run_terminal_cmd
 
 **What happens:**
 1. LLM receives prompt
