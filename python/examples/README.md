@@ -1,87 +1,66 @@
-# Python Examples
+# Grammar School Examples
 
-## Music DSL
+## DSL vs JSON Comparison
 
-A simple example DSL for creating music tracks and clips.
+### `json_vs_dsl_comparison.py`
 
+Demonstrates the fundamental difference between JSON and DSL approaches:
+
+- **JSON**: Data must flow through LLM (high token usage)
+- **DSL**: Data stays in runtime, LLM only generates instructions (low token usage)
+
+**Run it:**
 ```bash
-pip install grammar-school
-python examples/music_dsl.py
+cd python
+python -m examples.json_vs_dsl_comparison
 ```
 
-The example demonstrates:
-- Defining methods with the `@method` decorator
-- Creating a Grammar instance
-- Executing DSL code that chains method calls
-- Methods execute directly with their implementation
+### `mock_mcp_server.py`
 
-## GPT-5 Integration
+Simulates an MCP server to demonstrate how data flows:
 
-An example showing how to integrate Grammar School with GPT-5 using Context-Free Grammar (CFG) constraints.
+- **JSON approach**: MCP → LLM (data) → JSON → Execute
+- **DSL approach**: LLM → DSL code → Runtime → MCP (data stays)
 
+**Run it:**
 ```bash
-pip install grammar-school openai
-export OPENAI_API_KEY=your-api-key
-python examples/gpt_integration.py
+cd python
+python -m examples.mock_mcp_server
 ```
 
-The example demonstrates:
-- Using Grammar School's grammar as a CFG for GPT-5 custom tools
-- Ensuring GPT-5 generates only valid DSL code
-- Executing GPT-5-generated code with Grammar School
-- Building LLM-friendly DSLs with type safety
+## Key Insight
 
-See `gpt_integration_readme.md` for detailed documentation.
+The fundamental difference is **where data flows**:
 
-## Grammar Builder
+1. **JSON/Structured Output**:
+   - MCP fetches data
+   - Data sent to LLM as context (expensive!)
+   - LLM generates JSON with data included
+   - High token usage, limited by context window
 
-Examples showing how to define grammars programmatically or via config files.
+2. **DSL**:
+   - LLM generates DSL code (instructions only, ~30 tokens)
+   - Runtime executes DSL
+   - Runtime calls MCP directly (data stays in runtime)
+   - Low token usage, unlimited scalability
 
-```bash
-pip install grammar-school
-python examples/grammar_builder_example.py
-python examples/grammar_config_example.py
+## Example Flow
+
+### JSON Approach
+```
+1. MCP: fetch_users() → 1000 users
+2. LLM receives: 1000 users (50,000 tokens)
+3. LLM generates JSON with user data
+4. Execute JSON
 ```
 
-The examples demonstrate:
-- **Programmatic grammar definition**: Build grammars using the `GrammarBuilder` API
-- **Config-based grammars**: Define grammars in YAML/TOML files
-- **Method chaining**: Fluent API for building grammars
-- **Human-readable**: Automatic comments and descriptions
-
-```python
-from grammar_school import GrammarBuilder
-
-builder = GrammarBuilder()
-builder.rule("start", "call_chain", "Entry point")
-builder.rule("call_chain", "call (DOT call)*", "Chain of calls")
-builder.terminal("DOT", ".", "Dot separator")
-grammar = MyGrammar(grammar=builder.build())
+### DSL Approach
+```
+1. LLM generates: fetch_users().filter(age > 25).send_email()
+2. Runtime executes:
+   - Calls MCP: fetch_users() → Data stays in runtime
+   - Filters in runtime → No data to LLM
+   - Calls MCP: send_email() → Only method call
 ```
 
-## Functional DSL
-
-Users implement their own functional methods (map, filter, reduce, etc.) as regular `@method` handlers. The framework doesn't provide these - you implement them for your specific domain needs.
-
-```python
-from grammar_school import Grammar, method
-
-class MyGrammar(Grammar):
-    @method
-    def square(self, x):
-        return x * x
-
-    @method
-    def map(self, func, data):
-        # Your implementation
-        return [func(x) for x in data]
-
-    @method
-    def filter(self, predicate, data):
-        # Your implementation
-        return [x for x in data if predicate(x)]
-
-grammar = MyGrammar()
-grammar.execute('map(@square, data)')
-grammar.execute('filter(@is_even, data)')
-```
+**Token savings: 50,000 → 30 tokens (99.94% reduction!)**
