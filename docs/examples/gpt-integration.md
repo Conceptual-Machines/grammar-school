@@ -23,48 +23,33 @@ Grammar School is designed to create LLM-friendly DSLs. When combined with GPT-5
 ## Example Usage
 
 ```python
-from grammar_school import Grammar, verb, Action, Runtime
+from grammar_school import Grammar, method
 from openai import OpenAI
 
 class TaskGrammar(Grammar):
     """A simple task management DSL."""
 
-    @verb
-    def create_task(self, name: str, priority: str = "medium", _context=None):
-        """Create a new task with a name and optional priority."""
-        return Action(
-            kind="create_task",
-            payload={"name": name, "priority": priority},
-        )
-
-    @verb
-    def complete_task(self, name: str, _context=None):
-        """Mark a task as completed."""
-        return Action(
-            kind="complete_task",
-            payload={"name": name},
-        )
-
-class TaskRuntime(Runtime):
-    """Runtime that executes task management actions."""
-
     def __init__(self):
+        super().__init__()
         self.tasks = {}
 
-    def execute(self, action: Action) -> None:
-        if action.kind == "create_task":
-            name = action.payload["name"]
-            priority = action.payload.get("priority", "medium")
-            self.tasks[name] = {"priority": priority, "completed": False}
-            print(f"✓ Created task: {name} (priority: {priority})")
-        elif action.kind == "complete_task":
-            name = action.payload["name"]
-            if name in self.tasks:
-                self.tasks[name]["completed"] = True
-                print(f"✓ Completed task: {name}")
+    @method
+    def create_task(self, name: str, priority: str = "medium"):
+        """Create a new task with a name and optional priority."""
+        self.tasks[name] = {"priority": priority, "completed": False}
+        print(f"✓ Created task: {name} (priority: {priority})")
+
+    @method
+    def complete_task(self, name: str):
+        """Mark a task as completed."""
+        if name in self.tasks:
+            self.tasks[name]["completed"] = True
+            print(f"✓ Completed task: {name}")
+        else:
+            print(f"✗ Task not found: {name}")
 
 # Initialize Grammar School
-grammar = TaskGrammar(runtime=TaskRuntime())
+grammar = TaskGrammar()
 
 # Use CFG provider to build OpenAI tool and generate DSL code
 from grammar_school.cfg_vendor import OpenAICFGProvider
@@ -157,7 +142,7 @@ from grammar_school.cfg_vendor import OpenAICFGProvider
 from grammar_school.openai_utils import OpenAICFG
 
 # Initialize your grammar
-grammar = TaskGrammar(runtime=TaskRuntime())
+grammar = TaskGrammar()
 
 # Create CFG provider
 provider = OpenAICFGProvider()

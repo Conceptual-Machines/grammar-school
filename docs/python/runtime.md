@@ -1,71 +1,42 @@
-# Runtime
+# Runtime (Internal Architecture)
 
-The Runtime executes Actions produced by the interpreter.
+**Note:** With the unified `@method` interface, you don't need to implement Runtime. Methods execute directly. This page documents the internal architecture for advanced users.
 
 ## Overview
 
-The `Runtime` is a protocol (interface) that defines how Actions are executed. You implement this protocol to define the behavior of your DSL.
+Internally, Grammar School maintains a two-layer architecture:
+1. **Grammar layer**: Parses DSL and calls methods
+2. **Runtime layer**: Executes methods (handled automatically)
 
-## Implementing Runtime
+When using `@method`, the Runtime layer is handled automatically - you just write methods with their implementation.
 
-```python
-from grammar_school import Action, Runtime
+## Using @method (Recommended)
 
-class MyRuntime(Runtime):
-    def execute(self, action: Action) -> None:
-        if action.kind == "greet":
-            name = action.payload["name"]
-            print(f"Hello, {name}!")
-        elif action.kind == "create_track":
-            # Handle track creation
-            pass
-```
-
-## Action Execution
-
-Actions are executed in the order they're produced by the interpreter:
+With `@method`, you don't need Runtime:
 
 ```python
-grammar.execute('track(name="Drums").add_clip(start=0, length=8)', runtime)
-```
+from grammar_school import Grammar, method
 
-This will:
-1. Execute the `create_track` action
-2. Execute the `add_clip` action
-
-## State Management
-
-The Runtime can maintain state across action executions:
-
-```python
-class MusicRuntime(Runtime):
+class MyDSL(Grammar):
     def __init__(self):
+        super().__init__()
         self.tracks = []
-        self.current_track = None
 
-    def execute(self, action: Action) -> None:
-        if action.kind == "create_track":
-            self.current_track = {
-                "name": action.payload["name"],
-                "clips": []
-            }
-            self.tracks.append(self.current_track)
-        elif action.kind == "add_clip":
-            if self.current_track:
-                self.current_track["clips"].append({
-                    "start": action.payload["start"],
-                    "length": action.payload["length"]
-                })
+    @method
+    def track(self, name):
+        # Implementation runs directly
+        self.tracks.append({"name": name})
+        print(f"Created track: {name}")
+
+dsl = MyDSL()
+dsl.execute('track(name="Drums")')  # No runtime needed!
 ```
 
-## Error Handling
+## Internal Architecture
 
-You can raise exceptions in `execute()` to handle errors:
+The `Runtime` protocol still exists internally, but is handled automatically when using `@method`. The framework:
+1. Parses DSL code
+2. Calls your `@method` handlers directly
+3. Methods execute immediately
 
-```python
-def execute(self, action: Action) -> None:
-    if action.kind == "create_track":
-        if action.payload["name"] in self.tracks:
-            raise ValueError(f"Track {action.payload['name']} already exists")
-        # ...
-```
+You can manage state using `self` attributes in your Grammar class.

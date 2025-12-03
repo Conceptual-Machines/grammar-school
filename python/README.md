@@ -17,108 +17,81 @@ pip install -e ".[dev]"
 ## Quick Start
 
 ```python
-from grammar_school import Action, Grammar, verb
+from grammar_school import Grammar, method
 
 class MyGrammar(Grammar):
-    @verb
-    def greet(self, name, _context=None):
-        # @verb methods return Actions (data structures)
-        # They are pure - no side effects here!
-        return Action(kind="greet", payload={"name": name})
+    @method
+    def greet(self, name):
+        # @method contains the actual implementation
+        # You can do anything here - side effects, state changes, etc.
+        print(f"Hello, {name}!")
 
-# Default runtime prints actions - no Runtime import needed!
+# No runtime needed - methods execute directly!
 grammar = MyGrammar()
 grammar.execute('greet(name="World")')
 
-# Or provide a custom runtime for actual behavior
-from grammar_school import Runtime
-
-class MyRuntime(Runtime):
+# Methods can maintain state using self
+class MyGrammarWithState(Grammar):
     def __init__(self):
-        self.greetings = []  # Runtime manages state
+        super().__init__()
+        self.greetings = []  # State managed in the grammar instance
 
-    def execute(self, action: Action) -> None:
-        # Runtime performs actual side effects
-        if action.kind == "greet":
-            name = action.payload["name"]
-            self.greetings.append(name)
-            print(f"Hello, {name}!")
+    @method
+    def greet(self, name):
+        self.greetings.append(name)
+        print(f"Hello, {name}!")
 
-grammar = MyGrammar(runtime=MyRuntime())
+grammar = MyGrammarWithState()
 grammar.execute('greet(name="World")')
+print(grammar.greetings)  # ['World']
 ```
 
 ## Understanding the Architecture
 
-Grammar School uses a **two-layer architecture**:
+Grammar School provides a **unified interface**:
 
-1. **Grammar + @verb methods**: Transform DSL syntax → Actions (pure, no side effects)
-2. **Runtime**: Execute Actions → Real world effects (side effects, state management)
+1. **Grammar + @method**: Methods contain their implementation directly
+2. **Framework handles the rest**: Parsing, interpretation, and execution happen automatically
 
-**Why this separation?**
-- Same Grammar works with different Runtimes (testing, production, mocking)
-- @verb methods are pure and easily testable
-- Runtime handles all state and side effects independently
+**Benefits:**
+- Simple and intuitive - just write methods with your logic
+- No need to separate concerns - methods can do anything
+- State management via `self` attributes
+- The Grammar/Runtime split is handled internally but hidden from you
 
-## Runtime Output
+## Streaming Execution
 
-**Default Runtime**: Prints actions to **stdout** (standard output/console)
-
-**Custom Runtimes**: Can output anywhere:
-- Files (write to disk)
-- Databases (store in SQL/NoSQL)
-- APIs (HTTP requests)
-- Logging systems
-- In-memory structures
-- Or any combination
-
-Example custom runtime that writes to a file:
-```python
-class FileRuntime(Runtime):
-    def __init__(self, filename: str):
-        self.filename = filename
-
-    def execute(self, action: Action) -> None:
-        with open(self.filename, 'a') as f:
-            f.write(f"{action.kind}: {action.payload}\n")
-
-grammar = MyGrammar(runtime=FileRuntime("output.log"))
-```
-
-## Streaming Actions
-
-For large DSL programs or real-time processing, you can stream actions as they're generated:
+For large DSL programs or real-time processing, you can stream method executions:
 
 ```python
 grammar = MyGrammar()
 
-# Stream actions one at a time (memory efficient)
-for action in grammar.stream('track(name="A").track(name="B").track(name="C")'):
-    print(f"Got action: {action.kind}")
-    # Process action immediately, don't wait for all actions
-    runtime.execute(action)  # Execute as they arrive
+# Stream method executions one at a time (memory efficient)
+for _ in grammar.stream('greet(name="A").greet(name="B").greet(name="C")'):
+    # Methods execute as they're called
+    pass
 ```
 
 This is useful for:
-- **Large programs**: Don't load all actions into memory at once
-- **Real-time processing**: Start executing actions before compilation completes
-- **Memory efficiency**: Process actions incrementally
+- **Large programs**: Don't load all method calls into memory at once
+- **Real-time processing**: Start executing methods before parsing completes
+- **Memory efficiency**: Process methods incrementally
 
 ## Functional Programming Support
 
 Grammar School supports functional programming paradigms through the `FunctionalMixin`:
 
 ```python
-from grammar_school import Grammar, FunctionalMixin, verb, Action
+from grammar_school import Grammar, FunctionalMixin, method
 
 class MyGrammar(Grammar, FunctionalMixin):
-    @verb
-    def square(self, x, _context=None):
-        return Action(kind="square", payload={"value": x * x})
+    @method
+    def square(self, x):
+        return x * x
 
-    @verb
-    def is_even(self, x, _context=None):
-        return Action(kind="is_even", payload={"value": x % 2 == 0})
+    @method
+    def is_even(self, x):
+        return x % 2 == 0
 
 grammar = MyGrammar()
 # Use functional operations with function references
@@ -148,12 +121,9 @@ See the `examples/` directory for complete DSL implementations.
 - `Arg`: Named argument
 - `Call`: Function call with arguments
 - `CallChain`: Chain of calls (method chaining)
-- `Action`: Runtime action produced by interpreter
-- `Runtime`: Protocol for executing actions
-
 ### Decorators
 
-- `@verb`: Mark a method as a verb handler
+- `@method`: Mark a method as a DSL handler (contains implementation)
 - `@rule`: Define grammar rules (for custom grammars)
 
 ### Classes

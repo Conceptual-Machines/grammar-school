@@ -4,7 +4,7 @@ The Engine orchestrates parsing, interpretation, and execution in the Go impleme
 
 ## Overview
 
-The `Engine` is the main entry point for Grammar School in Go. It manages the parser, verb handlers, and execution flow.
+The `Engine` is the main entry point for Grammar School in Go. It manages the parser, method handlers, and execution flow.
 
 ## Creating an Engine
 
@@ -17,24 +17,12 @@ if err != nil {
 }
 ```
 
-## Compiling DSL Code
+## Executing DSL Code
 
-The `Compile` method parses and interprets DSL code into Actions:
-
-```go
-plan, err := engine.Compile(`greet(name="World")`)
-if err != nil {
-    log.Fatal(err)
-}
-```
-
-## Executing Actions
-
-The `Execute` method runs a plan of actions using a Runtime:
+The `Execute` method parses and executes DSL code by calling methods directly:
 
 ```go
-runtime := &MyRuntime{}
-err := engine.Execute(context.Background(), runtime, plan)
+err := engine.Execute(context.Background(), `greet(name="World")`)
 if err != nil {
     log.Fatal(err)
 }
@@ -53,43 +41,31 @@ import (
 
 type MyDSL struct{}
 
-func (d *MyDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *MyDSL) Greet(args gs.Args) error {
     name := args["name"].Str
-    action := gs.Action{
-        Kind: "greet",
-        Payload: map[string]interface{}{
-            "name": name,
-        },
-    }
-    return []gs.Action{action}, ctx, nil
-}
-
-type MyRuntime struct{}
-
-func (r *MyRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-    fmt.Printf("Hello, %v!\n", a.Payload["name"])
+    fmt.Printf("Hello, %s!\n", name)
     return nil
 }
 
 func main() {
     dsl := &MyDSL{}
-    // Note: Requires a Parser implementation
-    // engine, _ := gs.NewEngine("", dsl, parser)
-    // runtime := &MyRuntime{}
-    // plan, _ := engine.Compile(`greet(name="World")`)
-    // engine.Execute(context.Background(), runtime, plan)
+    parser := &MyParser{} // Implement gs.Parser interface
+    engine, _ := gs.NewEngine("", dsl, parser)
+    engine.Execute(context.Background(), `greet(name="World")`)
+    // Output: Hello, World!
 }
 ```
 
-## Verb Discovery
+## Method Discovery
 
-The Engine uses reflection to automatically discover verb handlers. A method is considered a verb handler if it matches this signature:
+The Engine uses reflection to automatically discover method handlers. A method is considered a handler if it matches this signature:
 
 ```go
-func (d *MyDSL) VerbName(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error)
+func (d *MyDSL) MethodName(args gs.Args) error
 ```
 
 The Engine will automatically register all methods with this signature.
+Methods execute directly when called - no Action return needed.
 
 ## Custom Grammar
 

@@ -1,6 +1,6 @@
 """Example Functional DSL using Grammar School with function references."""
 
-from grammar_school import Action, FunctionalMixin, Grammar, Runtime, verb
+from grammar_school import FunctionalMixin, Grammar, method
 
 
 class FunctionalGrammar(Grammar, FunctionalMixin):
@@ -10,47 +10,25 @@ class FunctionalGrammar(Grammar, FunctionalMixin):
     Uses FunctionalMixin to get map, filter, reduce, compose, and pipe operations.
     """
 
-    @verb
-    def square(self, x, _context=None):
+    @method
+    def square(self, x):
         """Square a number."""
-        return Action(kind="square", payload={"value": x * x})
+        return x * x
 
-    @verb
-    def double(self, x, _context=None):
+    @method
+    def double(self, x):
         """Double a number."""
-        return Action(kind="double", payload={"value": x * 2})
+        return x * 2
 
-    @verb
-    def is_even(self, x, _context=None):
+    @method
+    def is_even(self, x):
         """Check if number is even."""
-        return Action(kind="is_even", payload={"value": x % 2 == 0})
-
-
-class FunctionalRuntime(Runtime):
-    """Runtime that executes functional operations."""
-
-    def execute(self, action: Action) -> None:
-        """Execute functional actions."""
-        if action.kind == "map":
-            func = action.payload["func"]
-            data = action.payload["data"]
-            print(f"Map {func} over {data}")
-        elif action.kind == "filter":
-            predicate = action.payload["predicate"]
-            data = action.payload["data"]
-            print(f"Filter {data} using {predicate}")
-        elif action.kind == "reduce":
-            func = action.payload["func"]
-            data = action.payload["data"]
-            initial = action.payload.get("initial")
-            print(f"Reduce {data} using {func}" + (f" with initial {initial}" if initial else ""))
-        else:
-            print(f"Action: {action.kind} with payload: {action.payload}")
+        return x % 2 == 0
 
 
 def main():
     """Example usage of the Functional DSL."""
-    grammar = FunctionalGrammar(runtime=FunctionalRuntime())
+    grammar = FunctionalGrammar()
 
     # Functional programming examples
     print("=" * 60)

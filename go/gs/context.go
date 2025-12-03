@@ -35,6 +35,6 @@ func (c *Context) Set(key string, value interface{}) {
 // Args represents named arguments as a map.
 type Args map[string]Value
 
-// VerbHandler is the signature for verb handler methods.
-// Returns: actions, new context (can be nil to keep current), error
-type VerbHandler func(args Args, ctx *Context) ([]Action, *Context, error)
+// MethodHandler is the signature for method handler functions.
+// Methods execute directly - no Action return needed.
+type MethodHandler func(args Args) error

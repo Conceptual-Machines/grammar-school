@@ -2,12 +2,12 @@
 
 *A multi-language framework for building tiny LLM-friendly DSLs*
 
-Grammar School is a lightweight, multi-language framework for creating small, precise, LLM-friendly domain-specific languages (DSLs). It provides a simple way to define grammar rules, map DSL verbs to semantic handlers, and execute DSL programs through a clean **parser → AST → interpreter → actions → runtime** pipeline.
+Grammar School is a lightweight, multi-language framework for creating small, precise, LLM-friendly domain-specific languages (DSLs). It provides a simple way to define grammar rules, map DSL methods to implementations, and execute DSL programs through a clean **parser → AST → interpreter → execute** pipeline.
 
 ## Features
 
 - 🎯 **Simple Grammar Definition** - Define grammars via strings or structured combinators
-- 🔗 **Verb Mapping** - Map DSL verbs to semantic handlers with decorators/annotations
+- 🔗 **Method Mapping** - Map DSL methods to implementations with decorators/annotations
 - 🔄 **Complete Pipeline** - Parse → Interpret → Execute workflow
 - 🌍 **Multi-Language** - Independent implementations in Python and Go
 - 🤖 **LLM-Friendly** - Designed for LLM-generated DSL code
@@ -19,21 +19,15 @@ Grammar School is a lightweight, multi-language framework for creating small, pr
 === "Python"
 
     ```python
-    from grammar_school import Action, Grammar, Runtime, verb
+    from grammar_school import Grammar, method
 
-    class MyDSL:
-        @verb
-        def greet(self, name, _context=None):
-            return Action(kind="greet", payload={"name": name})
-
-    class MyRuntime(Runtime):
-        def execute(self, action: Action) -> None:
-            print(f"Hello, {action.payload['name']}!")
+    class MyDSL(Grammar):
+        @method
+        def greet(self, name):
+            print(f"Hello, {name}!")
 
     dsl = MyDSL()
-    grammar = Grammar(dsl)
-    runtime = MyRuntime()
-    grammar.execute('greet(name="World")', runtime)
+    dsl.execute('greet(name="World")')
     # Output: Hello, World!
     ```
 
@@ -75,9 +69,7 @@ DSL Code (string)
    ↓
 Parse → CallChain (AST)
    ↓
-Interpret → []Action (plan)
-   ↓
-Execute (runtime)
+Interpret → Execute methods directly
 ```
 
 All implementations follow the same conceptual design, ensuring consistency across languages while remaining independent.

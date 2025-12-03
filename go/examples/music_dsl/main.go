@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"grammar-school/gs"
 )
@@ -10,55 +9,29 @@ import (
 type MusicDSL struct{}
 
 // Track creates a new track.
-func (d *MusicDSL) Track(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *MusicDSL) Track(args gs.Args) error {
 	name := args["name"].Str
 	color := ""
 	if c, ok := args["color"]; ok {
 		color = c.Str
 	}
 
-	action := gs.Action{
-		Kind: "create_track",
-		Payload: map[string]interface{}{
-			"name":  name,
-			"color": color,
-		},
-	}
-
-	return []gs.Action{action}, ctx, nil
+	fmt.Printf("Creating track: name=%s, color=%s\n", name, color)
+	return nil
 }
 
 // AddClip adds a clip to the current track.
-func (d *MusicDSL) AddClip(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *MusicDSL) AddClip(args gs.Args) error {
 	start := args["start"].Num
 	length := args["length"].Num
 
-	action := gs.Action{
-		Kind: "add_clip",
-		Payload: map[string]interface{}{
-			"start":  start,
-			"length": length,
-		},
-	}
-
-	return []gs.Action{action}, ctx, nil
+	fmt.Printf("Adding clip: start=%.2f, length=%.2f\n", start, length)
+	return nil
 }
 
 // Mute mutes the current track.
-func (d *MusicDSL) Mute(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
-	action := gs.Action{
-		Kind:    "mute_track",
-		Payload: map[string]interface{}{},
-	}
-
-	return []gs.Action{action}, ctx, nil
-}
-
-// MusicRuntime is a simple runtime that prints actions.
-type MusicRuntime struct{}
-
-func (r *MusicRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-	fmt.Printf("Executing: %s with payload: %v\n", a.Kind, a.Payload)
+func (d *MusicDSL) Mute(args gs.Args) error {
+	fmt.Println("Muting track")
 	return nil
 }
 
@@ -75,11 +48,9 @@ func (p *MusicParser) Parse(input string) (*gs.CallChain, error) {
 func main() {
 	dsl := &MusicDSL{}
 	parser := &MusicParser{}
-	runtime := &MusicRuntime{}
 
-	// Runtime is now stored in Engine (aligned with Python)
-	// Pass nil to use default runtime that prints actions
-	_, err := gs.NewEngine("", dsl, parser, runtime)
+	// Create engine with new unified API (no runtime needed)
+	_, err := gs.NewEngine("", dsl, parser)
 	if err != nil {
 		fmt.Printf("Error creating engine: %v\n", err)
 		return
@@ -91,15 +62,11 @@ func main() {
 	fmt.Println("\nNote: Parser implementation needed to run this example")
 	fmt.Println("See parser_backend.go for the Parser interface")
 
-	// Once parser is implemented, uncomment:
-	// engine, _ := gs.NewEngine("", dsl, parser, runtime)
-	// plan, err := engine.Compile(code)
+	// Once parser is implemented, you could do:
+	// engine, _ := gs.NewEngine("", dsl, parser)
+	// err := engine.Execute(context.Background(), code)
 	// if err != nil {
-	// 	fmt.Printf("Error compiling: %v\n", err)
+	// 	fmt.Printf("Error executing: %v\n", err)
 	// 	return
 	// }
-	// Runtime is stored in engine, so Execute doesn't need it (aligned with Python)
-	// engine.Execute(context.Background(), plan)
-	// Or override with a different runtime:
-	// engine.Execute(context.Background(), plan, &OtherRuntime{})
 }

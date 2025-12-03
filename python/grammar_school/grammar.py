@@ -1,13 +1,18 @@
 """Grammar definition system for Grammar School."""
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, TypeVar
 
 from grammar_school.ast import CallChain
 from grammar_school.backend_lark import DEFAULT_GRAMMAR, LarkBackend
 from grammar_school.grammar_builder import GrammarBuilder
+from grammar_school.grammar_config import (
+    load_grammar_from_config,
+    load_grammar_from_toml,
+    load_grammar_from_yaml,
+)
 from grammar_school.interpreter import Interpreter
-from grammar_school.runtime import Action, Runtime
 
 T = TypeVar("T")
 
@@ -44,16 +49,20 @@ def rule(
     return decorator_with_kwargs
 
 
-def verb(func: Callable) -> Callable:
+def method(func: Callable) -> Callable:
     """
-    Decorator to mark a method as a semantic handler for a verb.
+    Decorator to mark a method as a direct implementation handler.
+
+    Methods decorated with @method contain the actual implementation.
+    The framework handles the Grammar/Runtime split internally.
 
     Example:
-        @verb
-        def track(self, name, color=None, _context=None):
-            return Action(kind="create_track", payload={...})
+        @method
+        def greet(self, name):
+            print(f"Hello, {name}!")
+            # Can do anything here - side effects, state changes, etc.
     """
-    func._is_verb = True  # type: ignore[attr-defined]
+    func._is_method = True  # type: ignore[attr-defined]
     return func
 
 
@@ -116,19 +125,32 @@ class Grammar:
 
     def __init__(
         self,
-        runtime: Runtime | None = None,
-        grammar: str | GrammarBuilder = DEFAULT_GRAMMAR,
+        grammar: str | GrammarBuilder | dict[str, Any] | Path | None = None,
+        grammar_file: str | Path | None = None,
     ):
         """
-        Initialize grammar with runtime and optional custom grammar.
+        Initialize grammar with optional custom grammar definition.
 
         Args:
-            runtime: Runtime instance that executes actions (optional, defaults to printing actions)
-            grammar: Optional custom grammar string or GrammarBuilder instance
-                    (defaults to Grammar School's default)
+            grammar: Optional custom grammar. Can be:
+                    - String (Lark grammar definition)
+                    - GrammarBuilder instance
+                    - Dict (grammar config - will be loaded via load_grammar_from_config)
+                    - Path (to YAML/TOML grammar config file)
+                    - None (uses Grammar School's default)
+            grammar_file: Optional path to YAML/TOML grammar config file (alternative to grammar)
 
         Example:
             ```python
+            # Using @method handlers - simple and direct
+            class MyDSL(Grammar):
+                @method
+                def greet(self, name):
+                    print(f"Hello, {name}!")
+
+            dsl = MyDSL()  # No runtime needed
+            dsl.execute('greet(name="World")')
+
             # Using string
             grammar = MyGrammar(grammar="start: call_chain\ncall_chain: call (DOT call)*")
 
@@ -137,75 +159,126 @@ class Grammar:
             builder = GrammarBuilder.default()
             grammar = MyGrammar(grammar=builder)
 
-            # Using custom GrammarBuilder
-            builder = GrammarBuilder()
-            builder.rule("start", "statement*")
-            grammar = MyGrammar(grammar=builder)
+            # Using config dict
+            config = {
+                "start": "start",
+                "rules": [
+                    {"name": "start", "definition": "call_chain"},
+                    {"name": "call_chain", "definition": "call (DOT call)*"}
+                ]
+            }
+            grammar = MyGrammar(grammar=config)
+
+            # Using config file
+            grammar = MyGrammar(grammar_file="grammar.yaml")
+            # or
+            grammar = MyGrammar(grammar="grammar.toml")  # Path as string
             ```
         """
-        self.runtime = runtime if runtime is not None else _DefaultRuntime()
 
-        # Convert GrammarBuilder to string if needed
-        if isinstance(grammar, GrammarBuilder):
-            grammar = grammar.build()
+        # Handle grammar parameter
+        if grammar is None:
+            if grammar_file is not None:
+                # Load from file
+                grammar_str = self._load_grammar_from_file(grammar_file)
+            else:
+                # Use default
+                grammar_str = DEFAULT_GRAMMAR
+        elif isinstance(grammar, dict):
+            # Config dict - load it
+            grammar_str = load_grammar_from_config(grammar)
+        elif isinstance(grammar, str | Path) and (
+            str(grammar).endswith(".yaml")
+            or str(grammar).endswith(".yml")
+            or str(grammar).endswith(".toml")
+        ):
+            # Path to config file
+            grammar_str = self._load_grammar_from_file(grammar)
+        elif isinstance(grammar, GrammarBuilder):
+            # GrammarBuilder - convert to string
+            grammar_str = grammar.build()
+        else:
+            # String (Lark grammar definition)
+            grammar_str = str(grammar)
 
-        self.backend = LarkBackend(grammar)
+        self.backend = LarkBackend(grammar_str)
         self.interpreter = Interpreter(self)
+
+    def _load_grammar_from_file(self, path: str | Path) -> str:
+        """Load grammar from YAML or TOML config file."""
+        path = Path(path)
+        if path.suffix in (".yaml", ".yml"):
+            return load_grammar_from_yaml(path)
+        elif path.suffix == ".toml":
+            return load_grammar_from_toml(path)
+        else:
+            raise ValueError(
+                f"Unsupported grammar config file format: {path.suffix}. Use .yaml, .yml, or .toml"
+            )
 
     def parse(self, code: str) -> CallChain:
         """Parse DSL code into a CallChain AST."""
         return self.backend.parse(code)
 
-    def compile(self, code: str) -> list[Action]:
-        """Compile DSL code into a list of Actions."""
+    def compile(self, code: str) -> list[None]:
+        """
+        Compile DSL code by executing methods.
+
+        Note: Methods execute directly during compilation.
+        Returns a list of None values (one per method call).
+        """
         call_chain = self.parse(code)
         return self.interpreter.interpret(call_chain)
 
     def stream(self, code: str):
         """
-        Stream Actions as they're generated from DSL code.
+        Stream method executions from DSL code.
 
-        This is a generator that yields actions one at a time, allowing
+        This is a generator that executes methods one at a time, allowing
         for memory-efficient processing and real-time execution of large DSL programs.
 
         Args:
-            code: DSL code string to compile and stream
+            code: DSL code string to execute and stream
 
         Yields:
-            Action: Actions as they're generated from verb handlers
+            None: One None per method executed (methods execute during iteration)
 
         Example:
             ```python
             grammar = MyGrammar()
-            for action in grammar.stream('track(name="A").track(name="B").track(name="C")'):
-                print(f"Got action: {action.kind}")
-                # Process action immediately, don't wait for all actions
+            for _ in grammar.stream('greet(name="A").greet(name="B").greet(name="C")'):
+                # Methods execute as they're called
+                pass
             ```
         """
         call_chain = self.parse(code)
         yield from self.interpreter.interpret_stream(call_chain)
 
-    def execute(self, code_or_plan: str | list[Action], runtime: Runtime | None = None) -> None:
+    def execute(self, code: str) -> None:
         """
-        Execute DSL code or a plan of actions using the runtime.
+        Execute DSL code by calling methods directly.
+
+        Methods decorated with @method are executed immediately when called.
+        No runtime is needed - methods contain their own implementation.
 
         Args:
-            code_or_plan: DSL code string or list of Actions to execute
-            runtime: Optional runtime instance (uses instance runtime if not provided)
+            code: DSL code string to execute
 
-        Raises:
-            ValueError: If no runtime is available (neither instance nor parameter)
+        Example:
+            ```python
+            class MyDSL(Grammar):
+                @method
+                def greet(self, name):
+                    print(f"Hello, {name}!")
+
+            dsl = MyDSL()
+            dsl.execute('greet(name="World")')  # Prints: Hello, World!
+            ```
         """
-        if runtime is None:
-            runtime = self.runtime
-
-        if runtime is None:
-            raise ValueError("No runtime provided. Either pass runtime to __init__ or to execute()")
-
-        plan = self.compile(code_or_plan) if isinstance(code_or_plan, str) else code_or_plan
-
-        for action in plan:
-            runtime.execute(action)
+        call_chain = self.parse(code)
+        # Execute methods directly - they run during interpretation
+        for _ in self.interpreter.interpret_stream(call_chain):
+            pass  # Methods execute during interpretation
 
 
 def sym(name: str) -> Any:
@@ -237,19 +310,3 @@ class _Optional:
 def optional(expr: Any) -> Any:
     """Create an optional combinator."""
     return _Optional(expr).optional()
-
-
-class _DefaultRuntime(Runtime):
-    """
-    Default runtime that prints actions to stdout.
-
-    This is used when no runtime is provided to Grammar.__init__().
-    Output goes to standard output (stdout) - typically the console/terminal.
-
-    For custom output destinations (files, databases, APIs, etc.),
-    create a custom Runtime implementation.
-    """
-
-    def execute(self, action: Action) -> None:
-        """Print action to stdout (standard output/console)."""
-        print(f"Action: {action.kind} with payload: {action.payload}")

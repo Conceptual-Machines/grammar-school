@@ -3,77 +3,64 @@
 from typing import Any
 
 from grammar_school.ast import CallChain, Value
-from grammar_school.runtime import Action
 
 
 class Interpreter:
-    """Interprets CallChain AST into Actions."""
+    """Interprets CallChain AST and executes methods directly."""
 
     def __init__(self, dsl_instance: Any):
-        """Initialize interpreter with a DSL instance containing verb handlers."""
+        """Initialize interpreter with a DSL instance containing method handlers."""
         self.dsl = dsl_instance
-        self._verb_handlers = self._collect_verbs()
+        self._method_handlers = self._collect_methods()
 
-    def _collect_verbs(self) -> dict[str, Any]:
-        """Collect all methods marked with @verb decorator."""
-        verbs = {}
+    def _collect_methods(self) -> dict[str, Any]:
+        """Collect all methods marked with @method decorator."""
+        methods = {}
         for name in dir(self.dsl):
             attr = getattr(self.dsl, name)
-            if callable(attr) and getattr(attr, "_is_verb", False):
-                verbs[name] = attr
-        return verbs
+            if callable(attr) and getattr(attr, "_is_method", False):
+                methods[name] = attr
+        return methods
 
-    def interpret(self, call_chain: CallChain) -> list[Action]:
+    def interpret(self, call_chain: CallChain) -> list[None]:
         """
-        Interpret a CallChain into a list of Actions.
+        Interpret a CallChain by executing methods directly.
 
-        Walks the call chain, coerce Values to native types,
-        dispatch to verb methods, and collect Actions.
+        Note: This method exists for compatibility but methods execute directly
+        during interpret_stream. The returned list will contain None values
+        (one per method call executed).
         """
         return list(self.interpret_stream(call_chain))
 
     def interpret_stream(self, call_chain: CallChain):
         """
-        Interpret a CallChain and yield Actions as they're generated (streaming).
+        Interpret a CallChain by executing methods directly (streaming).
 
-        This is a generator that yields actions one at a time, allowing
+        This is a generator that executes methods one at a time, allowing
         for memory-efficient processing of large DSL programs.
 
         Yields:
-            Action: Actions as they're generated from verb handlers
+            None: One None per method executed (for compatibility with Action-based interface)
         """
-        context = None
-
         for call in call_chain.calls:
-            if call.name not in self._verb_handlers:
-                raise ValueError(f"Unknown verb: {call.name}")
+            if call.name not in self._method_handlers:
+                raise ValueError(f"Unknown method: {call.name}")
 
-            handler = self._verb_handlers[call.name]
+            handler = self._method_handlers[call.name]
             args = self._coerce_args(call.args)
-
-            result = handler(**args, _context=context)
-
-            if isinstance(result, Action):
-                yield result
-                context = result
-            elif isinstance(result, tuple) and len(result) == 2:
-                action, new_context = result
-                yield action
-                context = new_context
-            elif isinstance(result, list):
-                for action in result:
-                    yield action
-                if result:
-                    context = result[-1]
-            else:
-                raise ValueError(f"Verb handler {call.name} returned invalid result: {result}")
+            # Remove _context from args if present (methods don't need it)
+            args.pop("_context", None)
+            # Call method directly - it executes immediately
+            handler(**args)
+            # Yield None to indicate execution (for compatibility)
+            yield None
 
     def _coerce_args(self, args: dict[str, Value]) -> dict[str, Any]:
         """
         Coerce Value objects to native Python types.
 
         Function references (kind="function") are resolved to actual function handlers
-        if they exist in the verb handlers, otherwise passed as string identifiers.
+        if they exist in the method handlers, otherwise passed as string identifiers.
 
         Positional arguments are extracted and passed in order as *args.
         """
@@ -101,7 +88,7 @@ class Interpreter:
             if value.kind == "function":
                 # Function reference - try to resolve to handler, otherwise pass as string
                 func_name = value.value
-                coerced[name] = self._verb_handlers.get(func_name, func_name)
+                coerced[name] = self._method_handlers.get(func_name, func_name)
             else:
                 coerced[name] = value.value
 
@@ -112,8 +99,8 @@ class Interpreter:
             for value in positional_values:
                 if value.kind == "function":
                     func_name = value.value
-                    if func_name in self._verb_handlers:
-                        coerced_positionals.append(self._verb_handlers[func_name])
+                    if func_name in self._method_handlers:
+                        coerced_positionals.append(self._method_handlers[func_name])
                     else:
                         coerced_positionals.append(func_name)
                 else:

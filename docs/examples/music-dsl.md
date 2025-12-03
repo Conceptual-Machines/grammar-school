@@ -15,71 +15,53 @@ Cmaj7(1, 1), Fmaj7(2, 1), Gmaj7(3, 1)
 ## Python Implementation
 
 ```python
-from grammar_school import Action, Grammar, Runtime, verb
+from grammar_school import Grammar, method
 
-class MusicDSL:
-    @verb
-    def track(self, name, color=None, _context=None):
-        return Action(
-            kind="create_track",
-            payload={"name": name, "color": color or "default"}
-        )
-
-    @verb
-    def add_clip(self, start, length, _context=None):
-        return Action(
-            kind="add_clip",
-            payload={"start": start, "length": length}
-        )
-
-    @verb
-    def add_effect(self, name, amount=1.0, _context=None):
-        return Action(
-            kind="add_effect",
-            payload={"name": name, "amount": amount}
-        )
-
-class MusicRuntime(Runtime):
+class MusicDSL(Grammar):
     def __init__(self):
+        super().__init__()
         self.tracks = []
         self.current_track = None
 
-    def execute(self, action: Action) -> None:
-        if action.kind == "create_track":
-            self.current_track = {
-                "name": action.payload["name"],
-                "color": action.payload["color"],
-                "clips": [],
-                "effects": []
-            }
-            self.tracks.append(self.current_track)
+    @method
+    def track(self, name, color=None):
+        self.current_track = {
+            "name": name,
+            "color": color or "default",
+            "clips": [],
+            "effects": []
+        }
+        self.tracks.append(self.current_track)
+        print(f"Created track: {name}" + (f" (color: {color})" if color else ""))
 
-        elif action.kind == "add_clip":
-            if self.current_track:
-                self.current_track["clips"].append({
-                    "start": action.payload["start"],
-                    "length": action.payload["length"]
-                })
+    @method
+    def add_clip(self, start, length):
+        if self.current_track:
+            self.current_track["clips"].append({
+                "start": start,
+                "length": length
+            })
+            print(f"Added clip: start={start}, length={length}")
 
-        elif action.kind == "add_effect":
-            if self.current_track:
-                self.current_track["effects"].append({
-                    "name": action.payload["name"],
-                    "amount": action.payload["amount"]
-                })
+    @method
+    def add_effect(self, name, amount=1.0):
+        if self.current_track:
+            self.current_track["effects"].append({
+                "name": name,
+                "amount": amount
+            })
+            print(f"Added effect: {name} (amount: {amount})")
 
 # Usage
 dsl = MusicDSL()
-grammar = Grammar(dsl)
-runtime = MusicRuntime()
 
 code = '''
 track(name="Drums", color="blue").add_clip(start=0, length=8)
 track(name="Bass").add_clip(start=0, length=4).add_effect(name="reverb", amount=0.5)
 '''
 
-grammar.execute(code, runtime)
-print(runtime.tracks)
+dsl.execute(code)
+print(dsl.tracks)
 ```
 
 ## Go Implementation
@@ -156,6 +138,6 @@ func (r *MusicRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
 ## Key Concepts Demonstrated
 
 1. **Method Chaining** - `track(...).add_clip(...).add_effect(...)`
-2. **Context Passing** - The `_context` parameter allows verbs to access previous actions
-3. **Action Composition** - Multiple actions can be returned from a single verb
+2. **State Management** - Methods can access and modify state via `self` attributes
+3. **Direct Execution** - Methods execute directly when called
 4. **Runtime State** - The runtime maintains state across action executions

@@ -10,10 +10,10 @@ python examples/music_dsl.py
 ```
 
 The example demonstrates:
-- Defining verbs with the `@verb` decorator
+- Defining methods with the `@method` decorator
 - Creating a Grammar instance
 - Executing DSL code that chains method calls
-- Using a Runtime to execute actions
+- Methods execute directly with their implementation
 
 ## GPT-5 Integration
 
@@ -75,12 +75,12 @@ The example demonstrates:
 - **Mixin pattern**: Inheriting from `FunctionalMixin` to get functional operations
 
 ```python
-from grammar_school import Grammar, FunctionalMixin, verb, Action
+from grammar_school import Grammar, FunctionalMixin, method
 
 class MyGrammar(Grammar, FunctionalMixin):
-    @verb
-    def square(self, x, _context=None):
-        return Action(kind="square", payload={"value": x * x})
+    @method
+    def square(self, x):
+        return x * x
 
 grammar = MyGrammar()
 grammar.execute('map(@square, data)')

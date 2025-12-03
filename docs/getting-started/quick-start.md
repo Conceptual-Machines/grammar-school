@@ -24,31 +24,19 @@ Let's create a simple greeting DSL that demonstrates the core concepts.
 === "Python"
 
     ```python
-    from grammar_school import Action, Grammar, Runtime, verb
+    from grammar_school import Grammar, method
 
-    class GreetingDSL:
-        @verb
-        def greet(self, name, message="Hello", _context=None):
-            return Action(
-                kind="greet",
-                payload={"name": name, "message": message}
-            )
-
-    class GreetingRuntime(Runtime):
-        def execute(self, action: Action) -> None:
-            msg = action.payload["message"]
-            name = action.payload["name"]
-            print(f"{msg}, {name}!")
+    class GreetingDSL(Grammar):
+        @method
+        def greet(self, name, message="Hello"):
+            print(f"{message}, {name}!")
 
     # Use the DSL
     dsl = GreetingDSL()
-    grammar = Grammar(dsl)
-    runtime = GreetingRuntime()
-
-    grammar.execute('greet(name="Alice")', runtime)
+    dsl.execute('greet(name="Alice")')
     # Output: Hello, Alice!
 
-    grammar.execute('greet(name="Bob", message="Hi")', runtime)
+    dsl.execute('greet(name="Bob", message="Hi")')
     # Output: Hi, Bob!
     ```
 
@@ -65,47 +53,32 @@ Let's create a simple greeting DSL that demonstrates the core concepts.
 
     type GreetingDSL struct{}
 
-    func (d *GreetingDSL) Greet(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+    func (d *GreetingDSL) Greet(args gs.Args) error {
         name := args["name"].Str
         message := "Hello"
         if msg, ok := args["message"]; ok {
             message = msg.Str
         }
-
-        action := gs.Action{
-            Kind: "greet",
-            Payload: map[string]interface{}{
-                "name":    name,
-                "message": message,
-            },
-        }
-        return []gs.Action{action}, ctx, nil
-    }
-
-    type GreetingRuntime struct{}
-
-    func (r *GreetingRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-        msg := a.Payload["message"].(string)
-        name := a.Payload["name"].(string)
-        fmt.Printf("%s, %s!\n", msg, name)
+        fmt.Printf("%s, %s!\n", message, name)
         return nil
     }
 
     func main() {
         dsl := &GreetingDSL{}
-        // Note: You'll need to implement a Parser
-        // engine, _ := gs.NewEngine("", dsl, parser)
-        // runtime := &GreetingRuntime{}
-        // plan, _ := engine.Compile(`greet(name="Alice")`)
-        // engine.Execute(context.Background(), runtime, plan)
+        parser := &MyParser{} // Implement gs.Parser interface
+        engine, _ := gs.NewEngine("", dsl, parser)
+        engine.Execute(context.Background(), `greet(name="Alice")`)
+        // Output: Hello, Alice!
+        engine.Execute(context.Background(), `greet(name="Bob", message="Hi")`)
+        // Output: Hi, Bob!
     }
     ```
 
 ## How It Works
 
-1. **Define Verbs** - Create methods marked with `@verb` (Python) or matching the `VerbHandler` signature (Go)
-2. **Create Grammar** - Instantiate a `Grammar` (Python) or `Engine` (Go) with your DSL
-3. **Execute** - Parse and execute DSL code, which gets converted to Actions and run by your Runtime
+1. **Define Methods** - Create methods marked with `@method` (Python) that contain your implementation
+2. **Create Grammar** - Instantiate your Grammar class (Python) or Engine (Go) with your DSL
+3. **Execute** - Parse and execute DSL code - methods run directly when called
 
 ## Next Steps
 

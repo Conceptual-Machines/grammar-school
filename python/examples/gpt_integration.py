@@ -8,67 +8,41 @@ only valid DSL code that can be executed by Grammar School.
 
 from openai import OpenAI
 
-from grammar_school import Action, Grammar, Runtime, verb
+from grammar_school import Grammar, method
 
 
 class TaskGrammar(Grammar):
     """A simple task management DSL for creating and managing tasks."""
 
-    @verb
-    def create_task(self, name: str, priority: str = "medium", _context=None):
-        """Create a new task with a name and optional priority."""
-        return Action(
-            kind="create_task",
-            payload={"name": name, "priority": priority},
-        )
-
-    @verb
-    def complete_task(self, name: str, _context=None):
-        """Mark a task as completed."""
-        return Action(
-            kind="complete_task",
-            payload={"name": name},
-        )
-
-    @verb
-    def list_tasks(self, _context=None):
-        """List all tasks."""
-        return Action(
-            kind="list_tasks",
-            payload={},
-        )
-
-
-class TaskRuntime(Runtime):
-    """Runtime that executes task management actions."""
-
     def __init__(self):
+        super().__init__()
         self.tasks = {}
 
-    def execute(self, action: Action) -> None:
-        """Execute a task management action."""
-        if action.kind == "create_task":
-            name = action.payload["name"]
-            priority = action.payload.get("priority", "medium")
-            self.tasks[name] = {"priority": priority, "completed": False}
-            print(f"✓ Created task: {name} (priority: {priority})")
+    @method
+    def create_task(self, name: str, priority: str = "medium"):
+        """Create a new task with a name and optional priority."""
+        self.tasks[name] = {"priority": priority, "completed": False}
+        print(f"✓ Created task: {name} (priority: {priority})")
 
-        elif action.kind == "complete_task":
-            name = action.payload["name"]
-            if name in self.tasks:
-                self.tasks[name]["completed"] = True
-                print(f"✓ Completed task: {name}")
-            else:
-                print(f"✗ Task not found: {name}")
+    @method
+    def complete_task(self, name: str):
+        """Mark a task as completed."""
+        if name in self.tasks:
+            self.tasks[name]["completed"] = True
+            print(f"✓ Completed task: {name}")
+        else:
+            print(f"✗ Task not found: {name}")
 
-        elif action.kind == "list_tasks":
-            if not self.tasks:
-                print("No tasks found.")
-            else:
-                print("\nTasks:")
-                for name, task in self.tasks.items():
-                    status = "✓" if task["completed"] else "○"
-                    print(f"  {status} {name} (priority: {task['priority']})")
+    @method
+    def list_tasks(self):
+        """List all tasks."""
+        if not self.tasks:
+            print("No tasks found.")
+            return
+        print("\nTasks:")
+        for name, task in self.tasks.items():
+            status = "✓" if task["completed"] else "○"
+            print(f"  {status} {name} (priority: {task['priority']})")
 
 
 def get_grammar_definition() -> str:
@@ -125,7 +99,7 @@ def integrate_with_gpt5():
     client = OpenAI()
 
     # Initialize Grammar School
-    grammar = TaskGrammar(runtime=TaskRuntime())
+    grammar = TaskGrammar()
 
     # Get the grammar definition for CFG
     grammar_def = get_grammar_definition()
@@ -207,7 +181,7 @@ def simple_example():
     print("=" * 60)
 
     # Initialize Grammar School
-    grammar = TaskGrammar(runtime=TaskRuntime())
+    grammar = TaskGrammar()
 
     # Example DSL code
     code = (

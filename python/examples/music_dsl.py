@@ -1,41 +1,47 @@
 """Example Music DSL using Grammar School."""
 
-from grammar_school import Action, Grammar, Runtime, verb
+from grammar_school import Grammar, method
 
 
 class MusicGrammar(Grammar):
     """A simple music DSL for creating tracks and clips."""
 
-    @verb
-    def track(self, name, color=None, _context=None):
+    def __init__(self):
+        super().__init__()
+        self.tracks = []
+        self.current_track = None
+
+    @method
+    def track(self, name, color=None):
         """Create a new track."""
-        return Action(kind="create_track", payload={"name": name, "color": color})
+        track = {"name": name, "color": color, "clips": [], "muted": False}
+        self.tracks.append(track)
+        self.current_track = track
+        print(f"Created track: {name}" + (f" (color: {color})" if color else ""))
 
-    @verb
-    def add_clip(self, start, length, _context=None):
+    @method
+    def add_clip(self, start, length):
         """Add a clip to the current track."""
-        return Action(kind="add_clip", payload={"start": start, "length": length})
+        if self.current_track is None:
+            print("Error: No track selected. Create a track first.")
+            return
+        clip = {"start": start, "length": length}
+        self.current_track["clips"].append(clip)
+        print(f"Added clip: start={start}, length={length} to track '{self.current_track['name']}'")
 
-    @verb
-    def mute(self, _context=None):
+    @method
+    def mute(self):
         """Mute the current track."""
-        return Action(kind="mute_track", payload={})
-
-
-class MusicRuntime(Runtime):
-    """Simple runtime that prints actions."""
-
-    def execute(self, action: Action) -> None:
-        print(f"Executing: {action.kind} with payload: {action.payload}")
+        if self.current_track is None:
+            print("Error: No track selected. Create a track first.")
+            return
+        self.current_track["muted"] = True
+        print(f"Muted track: {self.current_track['name']}")
 
 
 def main():
     """Example usage of the Music DSL."""
-    # Using custom runtime
-    grammar = MusicGrammar(runtime=MusicRuntime())
-
-    # Or use default runtime (just prints actions):
-    # grammar = MusicGrammar()
+    grammar = MusicGrammar()
 
     code = 'track(name="Drums").add_clip(start=0, length=8)'
     print(f"Code: {code}")
@@ -47,6 +53,10 @@ def main():
     print(f"Code: {code2}")
     print("\nExecuting:")
     grammar.execute(code2)
+
+    print("\n" + "=" * 50)
+    print("Final state:")
+    print(f"Tracks: {grammar.tracks}")
 
 
 if __name__ == "__main__":
