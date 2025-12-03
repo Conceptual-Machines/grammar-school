@@ -14,11 +14,28 @@ class Value:
 
 
 @dataclass
+class PropertyAccess:
+    """Property access expression like track.name."""
+
+    object_name: str
+    properties: list[str]  # List of property names (e.g., ["name"] for track.name)
+
+
+@dataclass
+class Expression:
+    """An expression with operators."""
+
+    operator: str | None  # None for single value, operator string for binary ops
+    left: "Expression | Value | PropertyAccess"
+    right: "Expression | Value | PropertyAccess | None"  # None for unary ops or single values
+
+
+@dataclass
 class Arg:
     """A named argument to a call."""
 
     name: str
-    value: Value
+    value: Value | Expression | PropertyAccess
 
 
 @dataclass
@@ -26,7 +43,7 @@ class Call:
     """A single function call with named arguments."""
 
     name: str
-    args: dict[str, Value]
+    args: dict[str, Value | Expression | PropertyAccess]
 
 
 @dataclass

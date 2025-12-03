@@ -4,7 +4,7 @@ from typing import Any
 
 from lark import Transformer, v_args
 
-from grammar_school.ast import Arg, Call, CallChain, Value
+from grammar_school.ast import Arg, Call, CallChain, Expression, PropertyAccess, Value
 
 
 @v_args(inline=True)
@@ -269,9 +269,31 @@ class SmartTransformer(Transformer):
         return Value(kind="function", value=func_name)
 
     # Explicit methods for default grammar (for backward compatibility and performance)
-    def start(self, call_chain):
-        """Handle start rule - default grammar."""
-        return call_chain
+    def start(self, *statements):
+        """
+        Handle start rule with multiple statements.
+
+        Combines all statements into a single CallChain.
+        """
+        # If single statement, return it directly (backward compatibility)
+        if len(statements) == 1:
+            statement = statements[0]
+            # If it's already a CallChain, return it
+            if isinstance(statement, CallChain):
+                return statement
+            # If it's a single Call, wrap it in a CallChain
+            if isinstance(statement, Call):
+                return CallChain(calls=[statement])
+            return statement
+
+        # Multiple statements - combine all calls into one CallChain
+        all_calls = []
+        for statement in statements:
+            if isinstance(statement, CallChain):
+                all_calls.extend(statement.calls)
+            elif isinstance(statement, Call):
+                all_calls.append(statement)
+        return CallChain(calls=all_calls)
 
     def call_chain(self, *calls):
         """Handle call_chain rule - default grammar."""
@@ -299,3 +321,79 @@ class SmartTransformer(Transformer):
     def function_ref(self, identifier):
         """Handle function_ref rule - default grammar."""
         return self._create_function_ref([identifier])
+
+    # Expression handling methods
+    def expression(self, expr):
+        """Handle expression - pass through."""
+        return expr
+
+    def comparison(self, *parts):
+        """Handle comparison expressions: addition (comparison_op addition)*"""
+        if len(parts) == 1:
+            return parts[0]
+        # Build left-associative expression tree
+        result = parts[0]
+        for i in range(1, len(parts), 2):
+            if i + 1 < len(parts):
+                op = str(parts[i])
+                right = parts[i + 1]
+                result = Expression(operator=op, left=result, right=right)
+        return result
+
+    def comparison_op(self, op):
+        """Handle comparison operator."""
+        return str(op)
+
+    def addition(self, *parts):
+        """Handle addition expressions: multiplication (add_op multiplication)*"""
+        if len(parts) == 1:
+            return parts[0]
+        # Build left-associative expression tree
+        result = parts[0]
+        for i in range(1, len(parts), 2):
+            if i + 1 < len(parts):
+                op = str(parts[i])
+                right = parts[i + 1]
+                result = Expression(operator=op, left=result, right=right)
+        return result
+
+    def add_op(self, op):
+        """Handle addition operator."""
+        return str(op)
+
+    def multiplication(self, *parts):
+        """Handle multiplication expressions: atom (mul_op atom)*"""
+        if len(parts) == 1:
+            return parts[0]
+        # Build left-associative expression tree
+        result = parts[0]
+        for i in range(1, len(parts), 2):
+            if i + 1 < len(parts):
+                op = str(parts[i])
+                right = parts[i + 1]
+                result = Expression(operator=op, left=result, right=right)
+        return result
+
+    def mul_op(self, op):
+        """Handle multiplication operator."""
+        return str(op)
+
+    def atom(self, atom_value):
+        """Handle atom (base value)."""
+        # If it's already a Value, Expression, PropertyAccess, return as-is
+        if isinstance(atom_value, Value | Expression | PropertyAccess):
+            return atom_value
+        # Otherwise, convert token to Value using the generic method
+        return self._create_value(atom_value)
+
+    def property_access(self, *parts):
+        """Handle property access: IDENTIFIER (DOT IDENTIFIER)+"""
+        # Filter out DOT tokens
+        identifiers = [
+            str(part) for part in parts if not (hasattr(part, "type") and part.type == "DOT")
+        ]
+        if len(identifiers) < 2:
+            # Single identifier - return as Value
+            return Value(kind="identifier", value=identifiers[0])
+        # Multiple identifiers - property access
+        return PropertyAccess(object_name=identifiers[0], properties=identifiers[1:])

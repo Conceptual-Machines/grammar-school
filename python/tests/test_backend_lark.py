@@ -183,3 +183,32 @@ class TestLarkBackend:
         assert isinstance(result, CallChain)
         assert len(result.calls) == 1
         assert result.calls[0].name == "test"
+
+    def test_parse_multiline_statements(self):
+        """Test parsing multiline statements."""
+        backend = LarkBackend()
+        code = """track(name="Drums")
+add_clip(start=0, length=8)
+mute()"""
+        result = backend.parse(code)
+
+        assert isinstance(result, CallChain)
+        assert len(result.calls) == 3
+        assert result.calls[0].name == "track"
+        assert result.calls[1].name == "add_clip"
+        assert result.calls[2].name == "mute"
+
+    def test_parse_multiline_mixed_with_chains(self):
+        """Test parsing multiline with both separate statements and chained calls."""
+        backend = LarkBackend()
+        code = """track(name="A")
+track(name="B").add_clip(start=0, length=4)
+mute()"""
+        result = backend.parse(code)
+
+        assert isinstance(result, CallChain)
+        assert len(result.calls) == 4
+        assert result.calls[0].name == "track"
+        assert result.calls[1].name == "track"
+        assert result.calls[2].name == "add_clip"
+        assert result.calls[3].name == "mute"
