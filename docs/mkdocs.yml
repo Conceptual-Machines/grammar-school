@@ -98,6 +98,7 @@ nav:
       - Music DSL: examples/music-dsl.md
       - GPT-5 Integration: examples/gpt-integration.md
       - Building Your DSL: examples/building-dsl.md
+      - JSON vs DSL Walkthrough: examples/json-vs-dsl-walkthrough.md
   - Specification: specification.md
   - Contributing: contributing.md
 
