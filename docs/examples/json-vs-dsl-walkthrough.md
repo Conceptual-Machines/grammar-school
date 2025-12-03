@@ -389,9 +389,9 @@ Requirements:
 !!! note "MCP Not Required"
     While this example uses MCP for convenience, the DSL approach works with **any REST API or HTTP endpoint**. The runtime can call any service that your application has access to - it doesn't need to be MCP-compatible. This gives you maximum flexibility in choosing your backend services.
 
-## Effort Comparison: Developer, LLM, and Runtime
+## Effort Comparison: Developer, LLM, Runtime, and MCP
 
-This section breaks down where effort is required in each approach across three dimensions: developer effort, LLM effort, and runtime effort.
+This section breaks down where effort is required in each approach across four dimensions: developer effort, LLM effort, runtime effort, and MCP/server effort.
 
 ### Structured Output (JSON) Approach
 
@@ -400,24 +400,28 @@ This section breaks down where effort is required in each approach across three 
 | **Developer Effort** | Low - Define data models only | Create Pydantic models (`User`, `FilteredUsersResponse`) |
 | **LLM Effort** | High - Processes all data in context | LLM receives 100 users, filters them, generates JSON response |
 | **Runtime Effort** | Minimal - Just parse response | Parse JSON from LLM response |
+| **MCP/Server Effort** | Medium - Handles LLM requests | MCP server receives requests from LLM, returns data, must be publicly accessible |
 
 **Effort Distribution:**
 - Developer: ~5% (data models)
-- LLM: ~90% (data processing, reasoning, generation)
+- LLM: ~85% (data processing, reasoning, generation)
 - Runtime: ~5% (parsing)
+- MCP/Server: ~5% (handling LLM requests)
 
 ### DSL Approach
 
 | Effort Type | Description | Examples |
 |------------|-------------|----------|
-| **Developer Effort** | High - Write runtime implementation | Define grammar, implement `fetch_users()`, `filter()`, `send_email()` methods |
+| **Developer Effort** | Medium - Write runtime implementation | Define grammar, implement `fetch_users()`, `filter()`, `send_email()` methods |
 | **LLM Effort** | Low - Only generates code | LLM generates `fetch_users(limit=100).filter().send_email()` |
-| **Runtime Effort** | Medium - Executes DSL code | Runtime parses DSL, calls MCP, processes data, handles errors |
+| **Runtime Effort** | High - Parses AST and executes DSL code | Runtime parses DSL into AST, executes code, calls MCP, processes data, handles errors, manages state |
+| **MCP/Server Effort** | Medium - Handles runtime requests | MCP server receives requests from runtime (can be local/private), returns data |
 
 **Effort Distribution:**
-- Developer: ~60% (grammar + runtime code)
+- Developer: ~30% (grammar + runtime code)
 - LLM: ~20% (code generation only)
-- Runtime: ~20% (execution, data processing)
+- Runtime: ~35% (AST parsing, code execution, data processing, state management)
+- MCP/Server: ~15% (handling runtime requests)
 
 ### Comparison Summary
 
@@ -425,10 +429,11 @@ This section breaks down where effort is required in each approach across three 
 |--------|------------------|-----|
 | **Developer writes** | Data models | Grammar + Runtime code |
 | **LLM does** | Data processing + Generation | Code generation only |
-| **Runtime does** | Parse JSON | Execute DSL + Process data |
+| **Runtime does** | Parse JSON | Parse AST + Execute DSL code + Process data + Manage state |
+| **MCP/Server does** | Handle LLM requests (public) | Handle runtime requests (can be private) |
 | **Best for** | Quick prototypes, small datasets | Production systems, large datasets |
 
-**Key Insight:** Structured output shifts effort to the LLM (which processes data), while DSL shifts effort to the developer (who writes runtime code) and runtime (which executes it). This trade-off makes DSL more efficient at scale because the LLM doesn't process data.
+**Key Insight:** Structured output shifts effort to the LLM (which processes data), while DSL shifts effort to the developer (who writes runtime code) and runtime (which executes and processes data). The runtime in DSL does more work than the developer, handling execution, data processing, and state management. This trade-off makes DSL more efficient at scale because the LLM doesn't process data.
 
 ## Developer Effort Comparison
 
