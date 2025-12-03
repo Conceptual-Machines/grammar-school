@@ -86,6 +86,12 @@ class FilteredUsersResponse(BaseModel):
         # ... rest of the code handles response parsing and error handling ...
 ```
 
+                    "require_approval": "never",
+                }
+            ],
+        )
+    except Exception as e:
+        print("Error:", e)
 **What happens:**
 1. LLM receives prompt
 2. LLM calls MCP server (public URL required)
