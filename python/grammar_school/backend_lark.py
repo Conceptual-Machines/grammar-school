@@ -8,9 +8,8 @@ from grammar_school.smart_transformer import SmartTransformer
 DEFAULT_GRAMMAR = """
 start: statement+
 
-// Statement can be a call chain (method chaining) or a single call
+// Statement is a call chain (which can be a single call or multiple chained calls)
 statement: call_chain
-         | call
 
 call_chain: call (DOT call)*
 call: IDENTIFIER "(" args? ")"
@@ -64,10 +63,10 @@ class ASTTransformer(Transformer):
                 all_calls.append(statement)
         return CallChain(calls=all_calls)
 
-    def statement(self, statement):
-        # Statement can be a call_chain or a single call
-        # Both are already transformed, just return as-is
-        return statement
+    def statement(self, call_chain):
+        # Statement is always a call_chain (which can contain one or more calls)
+        # Just return the call_chain as-is
+        return call_chain
 
     def call_chain(self, *calls):
         # Filter out DOT tokens - only keep Call objects
@@ -186,7 +185,7 @@ class LarkBackend:
         if isinstance(result, Call):
             return CallChain(calls=[result])
         # Fallback: return empty CallChain
-        return CallChain(calls=[])  # type: ignore[no-any-return]
+        return CallChain(calls=[])
 
     @staticmethod
     def clean_grammar_for_cfg(grammar: str) -> str:
