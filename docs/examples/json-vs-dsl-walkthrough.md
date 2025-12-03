@@ -200,11 +200,30 @@ class DataProcessingDSL(Grammar):
 
 **What happens:**
 1. LLM receives prompt
-2. LLM generates DSL code: `fetch_users(limit=100).filter().send_email()`
+2. LLM generates DSL code (example shown below)
 3. Runtime executes DSL code
-4. Runtime calls MCP server (can be localhost)
+4. Runtime calls external service (MCP server, REST API, or any HTTP endpoint - can be localhost)
 5. Runtime processes data locally
 6. **No data flows through LLM context**
+
+**Example Generated DSL Code:**
+
+For a prompt like "Fetch 100 users, filter to those older than 25, and send them notification emails", the LLM generates:
+
+```python
+fetch_users(limit=100).filter().send_email()
+```
+
+Or with more explicit parameters:
+
+```python
+fetch_users(limit=100).filter(condition="age > 25").send_email(template="notification")
+```
+
+This DSL code is then executed by the runtime, which handles all the actual data fetching, filtering, and email sending without exposing any data to the LLM context.
+
+!!! note "MCP vs REST API"
+    In this example, we use MCP (Model Context Protocol) for convenience, but **MCP is not required** for the DSL approach. The runtime can call any REST API, HTTP endpoint, or even local functions. The key advantage is that these services can be private/local, unlike the structured output approach where the LLM must be able to call them directly (requiring public URLs).
 
 ## API Request Comparison
 
@@ -330,18 +349,21 @@ Requirements:
 
 ```yaml
 Requirements:
-  - MCP servers: Can be local/private
-  - Authentication: Simple function calls
+  - External services: Can be local/private (REST API, MCP, or any HTTP endpoint)
+  - Authentication: Handled by runtime (not LLM)
   - Network: Local network or VPN
   - Security: Keep services private
   - Cost: Lower token usage = lower costs
 ```
 
 **Example Setup:**
-- Run MCP server on localhost: `http://localhost:8000`
+- Run service on localhost: `http://localhost:8000` (REST API, MCP, or any HTTP endpoint)
 - Or deploy to private network/VPN
 - No public exposure needed
 - Pay only for instruction generation tokens
+
+!!! note "MCP Not Required"
+    While this example uses MCP for convenience, the DSL approach works with **any REST API or HTTP endpoint**. The runtime can call any service that your application has access to - it doesn't need to be MCP-compatible. This gives you maximum flexibility in choosing your backend services.
 
 ## When to Use Each Approach
 
@@ -352,9 +374,11 @@ Requirements:
 - ✅ You need LLM reasoning on the data
 - ✅ Public APIs are acceptable
 - ✅ One-time queries
+- ✅ Latency is not critical
 
 ### Use DSL When:
 
+- ✅ **Latency is critical** - DSL provides more consistent and often faster response times, especially at scale
 - ✅ Large datasets (> 100 items)
 - ✅ Complex data processing pipelines
 - ✅ Data privacy is important
@@ -375,11 +399,11 @@ For detailed setup instructions, see the [comparison README](../python/examples/
 
 ## Key Takeaways
 
-1. **Token Efficiency**: DSL becomes more efficient as data size increases (threshold ~100 items)
+1. **Latency**: DSL provides more consistent and often faster response times, especially at scale - **critical for latency-sensitive applications**
 
-2. **Infrastructure**: JSON requires public services; DSL can use private/local services
+2. **Token Efficiency**: DSL becomes more efficient as data size increases (threshold ~100 items)
 
-3. **Latency**: DSL latency is more consistent and often faster at scale
+3. **Infrastructure**: JSON requires public services; DSL can use private/local services
 
 4. **Cost**: DSL significantly reduces token costs for large datasets (up to 98.8% savings)
 
