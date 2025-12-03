@@ -145,11 +145,32 @@ class ASTTransformer(Transformer):
         return [arg for arg in arg_list if not (hasattr(arg, "type") and arg.type == "COMMA")]
 
     def arg(self, *parts):
-        if len(parts) == 2:
-            name, value = parts
+        # Filter out = tokens
+        filtered = [p for p in parts if not (hasattr(p, "type") and p.type == "=")]
+        if len(filtered) == 2:
+            name, value = filtered
+            # Ensure value is Expression, PropertyAccess, or Value
+            if not isinstance(value, Value | Expression | PropertyAccess):
+                value = (
+                    self._token_to_value(value)
+                    if hasattr(value, "type")
+                    else Value(kind="string", value=str(value))
+                )
             return Arg(name=str(name), value=value)
+        elif len(filtered) == 1:
+            # Positional argument
+            value = filtered[0]
+            # Keep Expression, PropertyAccess, or Value as-is
+            if not isinstance(value, Value | Expression | PropertyAccess):
+                value = (
+                    self._token_to_value(value)
+                    if hasattr(value, "type")
+                    else Value(kind="string", value=str(value))
+                )
+            return value
         else:
-            return parts[0]
+            # Fallback: return first part as value
+            return parts[0] if parts else Value(kind="string", value="")
 
     def function_ref(self, identifier):
         """Handle function reference syntax @function_name."""

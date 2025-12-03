@@ -181,14 +181,14 @@ class SmartTransformer(Transformer):
                     if isinstance(arg, Arg):
                         args_dict[arg.name] = arg.value
                     else:
-                        # Convert to Value if needed
-                        if not isinstance(arg, Value):
+                        # Keep Expression, PropertyAccess, or Value as-is
+                        if not isinstance(arg, Value | Expression | PropertyAccess):
                             arg = self._create_value(arg)
                         args_dict[f"_positional_{positional_index}"] = arg
                         positional_index += 1
             else:
-                # Positional argument - convert to Value if needed
-                if not isinstance(child, Value):
+                # Positional argument - keep Expression, PropertyAccess, or Value as-is
+                if not isinstance(child, Value | Expression | PropertyAccess):
                     child = self._create_value(child)
                 args_dict[f"_positional_{positional_index}"] = child
                 positional_index += 1
@@ -208,8 +208,8 @@ class SmartTransformer(Transformer):
         # Return as list for compatibility, but could be made lazy
         return list(_iter_args())
 
-    def _create_arg(self, children: list) -> Arg | Value:
-        """Create an Arg (named) or return Value (positional)."""
+    def _create_arg(self, children: list) -> Arg | Value | Expression | PropertyAccess:
+        """Create an Arg (named) or return Value/Expression/PropertyAccess (positional)."""
         # Filter out = tokens
         filtered = [c for c in children if not (hasattr(c, "type") and c.type in ("=", "EQ"))]
 
@@ -217,13 +217,15 @@ class SmartTransformer(Transformer):
             # Named argument: IDENTIFIER = value
             name = str(filtered[0])
             value = filtered[1]
-            if not isinstance(value, Value):
+            # Keep Expression, PropertyAccess, or Value as-is
+            if not isinstance(value, Value | Expression | PropertyAccess):
                 value = self._create_value(value)
             return Arg(name=name, value=value)
         elif len(filtered) == 1:
             # Positional argument: just the value
             value = filtered[0]
-            if not isinstance(value, Value):
+            # Keep Expression, PropertyAccess, or Value as-is
+            if not isinstance(value, Value | Expression | PropertyAccess):
                 value = self._create_value(value)
             return value
         else:

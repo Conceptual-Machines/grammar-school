@@ -1,5 +1,7 @@
 """AST types for Grammar School."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from typing import Any
@@ -26,8 +28,8 @@ class Expression:
     """An expression with operators."""
 
     operator: str | None  # None for single value, operator string for binary ops
-    left: "Expression | Value | PropertyAccess"
-    right: "Expression | Value | PropertyAccess | None"  # None for unary ops or single values
+    left: Expression | Value | PropertyAccess
+    right: Expression | Value | PropertyAccess | None  # None for unary ops or single values
 
 
 @dataclass
