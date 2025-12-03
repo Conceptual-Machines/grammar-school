@@ -211,6 +211,7 @@ class DataProcessingDSL(Grammar):
 
             # Execute DSL code in runtime
             dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
+            dsl.execute(dsl_code)  # Add this line
             dsl.execute(dsl_code)
             # ... rest of the code handles timing and error handling ...
 ```
