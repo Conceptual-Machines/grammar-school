@@ -153,9 +153,7 @@ class DataProcessingDSL(Grammar):
         except Exception as e:
             print(f"  [Runtime] Email send failed: {e}")
         return self
-```
 
-```python
     # Measure latency
     start_time = time.time()
 
