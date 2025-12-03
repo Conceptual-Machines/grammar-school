@@ -61,9 +61,7 @@ class FilteredUsersResponse(BaseModel):
 
     users: list[User]
     count: int
-```
 
-```python
     try:
         # LLM calls MCP via tools - MCP server MUST be publicly accessible
         response = client.responses.parse(
@@ -95,6 +93,7 @@ class FilteredUsersResponse(BaseModel):
         print("Error:", e)
 ```
 **What happens:**
+
 1. LLM receives prompt
 2. LLM calls MCP server (public URL required)
 3. MCP returns 100 users → **flows into LLM context**
@@ -221,6 +220,7 @@ class DataProcessingDSL(Grammar):
 run_terminal_cmd
 
 **What happens:**
+
 1. LLM receives prompt
 2. LLM generates DSL code (example shown below)
 3. Runtime executes DSL code
@@ -388,6 +388,82 @@ Requirements:
 
 !!! note "MCP Not Required"
     While this example uses MCP for convenience, the DSL approach works with **any REST API or HTTP endpoint**. The runtime can call any service that your application has access to - it doesn't need to be MCP-compatible. This gives you maximum flexibility in choosing your backend services.
+
+## Developer Effort Comparison
+
+### Structured Output (JSON)
+
+**Setup Requirements:**
+- Define Pydantic models (data schemas)
+- Deploy MCP server to public URL
+- Configure API authentication
+
+**Code Required:**
+- Data models only (e.g., `User`, `FilteredUsersResponse`)
+- Minimal boilerplate for API calls
+
+**Example:**
+```python
+class User(BaseModel):
+    name: str
+    age: int
+    email: str
+
+class FilteredUsersResponse(BaseModel):
+    users: list[User]
+    count: int
+
+# That's it! The LLM handles the rest via MCP tools.
+```
+
+### DSL Approach
+
+**Setup Requirements:**
+- Define grammar (syntax rules)
+- Write runtime implementation (verbs/methods)
+- Implement data processing logic
+- Handle MCP/API calls in runtime
+
+**Code Required:**
+- Grammar definition
+- Runtime class with method implementations
+- Data processing logic
+- Error handling
+- API/MCP integration code
+
+**Example:**
+```python
+class DataProcessingDSL(Grammar):
+    def __init__(self, mcp_local_url: str = "http://localhost:8000"):
+        super().__init__()
+        self.users: list[dict] = []
+        self.filtered_users: list[dict] = []
+        self.mcp_local_url = mcp_local_url
+
+    @method
+    def fetch_users(self, limit: int = 10):
+        # Runtime implementation - you write this
+        mcp_url = f"{self.mcp_local_url}/mcp"
+        mcp_data = call_mcp_local(mcp_url, limit=limit)
+        self.users = mcp_data.get("users", [])
+        return self
+
+    @method
+    def filter(self, *args, **kwargs):
+        # Filter logic - you write this
+        self.filtered_users = [u for u in self.users if u.get("age", 0) > 25]
+        return self
+
+    @method
+    def send_email(self, recipients=None, template="notification"):
+        # Email sending logic - you write this
+        # ... implementation ...
+        return self
+```
+
+**Key Difference:**
+- **Structured Output**: Define data models → LLM handles execution
+- **DSL**: Define grammar + write runtime code → You control execution
 
 ## When to Use Each Approach
 
