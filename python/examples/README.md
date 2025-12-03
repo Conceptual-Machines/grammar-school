@@ -61,29 +61,27 @@ grammar = MyGrammar(grammar=builder.build())
 
 ## Functional DSL
 
-An example demonstrating functional programming patterns using the `FunctionalMixin`:
-
-```bash
-pip install grammar-school
-python examples/functional_dsl.py
-```
-
-The example demonstrates:
-- **Function references**: Using `@function_name` syntax to pass functions as arguments
-- **Higher-order functions**: `map`, `filter`, `reduce` operations
-- **Function composition**: `compose` and `pipe` for chaining transformations
-- **Mixin pattern**: Inheriting from `FunctionalMixin` to get functional operations
+Users implement their own functional methods (map, filter, reduce, etc.) as regular `@method` handlers. The framework doesn't provide these - you implement them for your specific domain needs.
 
 ```python
-from grammar_school import Grammar, FunctionalMixin, method
+from grammar_school import Grammar, method
 
-class MyGrammar(Grammar, FunctionalMixin):
+class MyGrammar(Grammar):
     @method
     def square(self, x):
         return x * x
 
+    @method
+    def map(self, func, data):
+        # Your implementation
+        return [func(x) for x in data]
+
+    @method
+    def filter(self, predicate, data):
+        # Your implementation
+        return [x for x in data if predicate(x)]
+
 grammar = MyGrammar()
 grammar.execute('map(@square, data)')
 grammar.execute('filter(@is_even, data)')
-grammar.execute('map(@square, data).filter(@is_even, data)')
 ```

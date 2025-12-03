@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-// FunctionalDSL demonstrates functional programming patterns using FunctionalMixin.
+// FunctionalDSL demonstrates functional programming patterns.
+// Users implement their own functional methods (map, filter, etc.) as needed.
 type FunctionalDSL struct {
-	gs.FunctionalMixin
 }
 
 // Square squares a number.

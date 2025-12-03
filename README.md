@@ -21,7 +21,7 @@ Grammar School is a multi-language framework designed to help you quickly build 
 - **Parse and interpret** - Built-in parser backends (Lark for Python, pluggable for Go)
 - **Execute directly** - Methods contain their implementation - simple and intuitive
 - **Integrate with LLMs** - Use your grammar as CFG constraints for GPT-5 and other LLMs
-- **Functional programming** - Built-in support for `map`, `filter`, `reduce`, `compose`, and `pipe`
+- **Functional programming** - Implement your own functional methods as regular `@method` handlers
 
 Perfect for building:
 - **LLM tool interfaces** - Define structured commands that LLMs can generate
@@ -34,7 +34,7 @@ Perfect for building:
 - **Simple API** - Define DSLs with just a few `@method` methods
 - **Method Chaining** - Natural syntax: `track(name="A").add_clip(start=0)`
 - **LLM-Friendly** - Use grammars as CFG constraints for GPT-5 and other LLMs
-- **Functional Programming** - Built-in `map`, `filter`, `reduce`, `compose`, `pipe`
+- **Functional Programming** - Implement your own functional methods for your domain
 - **Multi-Language** - Consistent API across Python and Go
 - **Well-Tested** - Comprehensive test suite with 80%+ coverage
 - **Well-Documented** - Full API docs and examples
@@ -92,7 +92,7 @@ See the `python/examples/` and `go/examples/` directories for complete DSL imple
 
 - **Music DSL** - Create tracks and clips with method chaining
 - **GPT-5 Integration** - Use Grammar School with OpenAI's GPT-5 using CFG constraints
-- **Functional DSL** - Demonstrate functional programming patterns with `map`, `filter`, `reduce`
+- **Functional DSL** - Example showing how to implement functional methods
 
 ## 🧠 Core Concepts
 
