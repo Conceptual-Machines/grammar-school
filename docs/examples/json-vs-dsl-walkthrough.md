@@ -152,6 +152,7 @@ class DataProcessingDSL(Grammar):
         except Exception as e:
             print(f"  [Runtime] Email send failed: {e}")
         return self
+        return self
 ```
 
 ```python
