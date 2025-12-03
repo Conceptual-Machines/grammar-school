@@ -68,12 +68,14 @@ def main():
         return
 
     # JSON Approach
-    json_tokens, json_result = structured_output_approach(
+    json_tokens, json_result, json_latency = structured_output_approach(
         client=client, mcp_public_url=MCP_PUBLIC_URL, model=MODEL
     )
 
     # DSL Approach
-    dsl_tokens, dsl_code = dsl_approach(client=client, mcp_local_url=MCP_LOCAL_URL, model=MODEL)
+    dsl_tokens, dsl_code, dsl_latency = dsl_approach(
+        client=client, mcp_local_url=MCP_LOCAL_URL, model=MODEL
+    )
 
     # Summary
     print("\n" + "=" * 70)
@@ -83,12 +85,25 @@ def main():
     if json_tokens > 0 and dsl_tokens > 0:
         reduction = ((json_tokens - dsl_tokens) / json_tokens * 100) if json_tokens > 0 else 0
         print("\nToken Usage:")
-        print(f"  JSON: {json_tokens} tokens")
-        print(f"  DSL:  {dsl_tokens} tokens")
+        print(f"  JSON: {json_tokens:,} tokens")
+        print(f"  DSL:  {dsl_tokens:,} tokens")
         if reduction > 0:
             print(f"  Reduction: {reduction:.1f}%")
         else:
             print(f"  Increase: {abs(reduction):.1f}%")
+
+    if json_latency > 0 and dsl_latency > 0:
+        latency_diff = json_latency - dsl_latency
+        latency_pct = ((json_latency - dsl_latency) / json_latency * 100) if json_latency > 0 else 0
+        print("\nLatency:")
+        print(f"  JSON: {json_latency:.2f}s")
+        print(f"  DSL:  {dsl_latency:.2f}s")
+        if latency_diff > 0:
+            print(f"  DSL faster by: {latency_diff:.2f}s ({latency_pct:.1f}%)")
+        elif latency_diff < 0:
+            print(f"  JSON faster by: {abs(latency_diff):.2f}s ({abs(latency_pct):.1f}%)")
+        else:
+            print("  Similar latency")
 
     print("\nInfrastructure Requirements:")
     print("  JSON:")

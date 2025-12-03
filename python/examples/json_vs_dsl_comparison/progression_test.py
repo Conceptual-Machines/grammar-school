@@ -51,7 +51,7 @@ def run_scale_test(num_users: int):
 
     # JSON Approach
     print(f"\n[1/2] JSON Approach ({num_users} users)...")
-    json_tokens, json_result = structured_output_approach(
+    json_tokens, json_result, json_latency = structured_output_approach(
         client=client,
         mcp_public_url=MCP_PUBLIC_URL,
         model=MODEL,
@@ -60,7 +60,7 @@ def run_scale_test(num_users: int):
 
     # DSL Approach
     print(f"\n[2/2] DSL Approach ({num_users} users)...")
-    dsl_tokens, dsl_code = dsl_approach(
+    dsl_tokens, dsl_code, dsl_latency = dsl_approach(
         client=client,
         mcp_local_url=MCP_LOCAL_URL,
         model=MODEL,
@@ -75,18 +75,26 @@ def run_scale_test(num_users: int):
         print(f"\n{'=' * 70}")
         print(f"RESULTS FOR {num_users} USERS")
         print(f"{'=' * 70}")
-        print(f"JSON: {json_tokens:,} tokens")
-        print(f"DSL:  {dsl_tokens:,} tokens")
+        print(f"JSON: {json_tokens:,} tokens, {json_latency:.2f}s")
+        print(f"DSL:  {dsl_tokens:,} tokens, {dsl_latency:.2f}s")
         print(f"Winner: {winner}")
         if reduction > 0:
-            print(f"DSL saves: {reduction:.1f}%")
+            print(f"DSL saves: {reduction:.1f}% tokens")
         else:
-            print(f"JSON saves: {abs(reduction):.1f}%")
+            print(f"JSON saves: {abs(reduction):.1f}% tokens")
+
+        latency_diff = json_latency - dsl_latency
+        if latency_diff > 0:
+            print(f"DSL faster by: {latency_diff:.2f}s")
+        elif latency_diff < 0:
+            print(f"JSON faster by: {abs(latency_diff):.2f}s")
 
         return {
             "users": num_users,
             "json_tokens": json_tokens,
             "dsl_tokens": dsl_tokens,
+            "json_latency": json_latency,
+            "dsl_latency": dsl_latency,
             "winner": winner,
             "reduction": reduction,
         }
@@ -121,8 +129,11 @@ def main():
     print("\n" + "=" * 70)
     print("PROGRESSION SUMMARY")
     print("=" * 70)
-    print(f"\n{'Users':<10} {'JSON Tokens':<15} {'DSL Tokens':<15} {'Winner':<10} {'Savings':<10}")
-    print("-" * 70)
+    print(
+        f"\n{'Users':<10} {'JSON Tokens':<15} {'DSL Tokens':<15} {'JSON Latency':<15} "
+        f"{'DSL Latency':<15} {'Winner':<10} {'Savings':<10}"
+    )
+    print("-" * 100)
 
     for r in results:
         savings_str = (
@@ -130,6 +141,7 @@ def main():
         )
         print(
             f"{r['users']:<10} {r['json_tokens']:<15,} {r['dsl_tokens']:<15,} "
+            f"{r.get('json_latency', 0):<15.2f} {r.get('dsl_latency', 0):<15.2f} "
             f"{r['winner']:<10} {savings_str:<10}"
         )
 

@@ -10,6 +10,7 @@ This demonstrates the DSL approach where:
 
 import asyncio
 import json
+import time
 
 from basic_grammar import BASIC_GRAMMAR
 from mcp import ClientSession
@@ -77,11 +78,13 @@ class DataProcessingDSL(Grammar):
         return self
 
     @method
-    def filter(self, users=None, condition=None):  # noqa: ARG002
+    def filter(self, *args, users=None, condition=None, **kwargs):  # noqa: ARG002
         """Filter users - simplified for basic grammar (no expressions)."""
         # With basic grammar, we can't parse expressions like "age > 25"
         # So we hardcode the filter logic in runtime
         # In production, you'd use advanced grammar with expressions
+        # Handle both positional and keyword arguments (including _positional from runtime)
+        # Ignore any unexpected kwargs (like _positional from interpreter)
         self.filtered_users = [u for u in self.users if u.get("age", 0) > 25]
         print(f"  [Runtime] Filtered to {len(self.filtered_users)} users")
         return self
@@ -134,6 +137,9 @@ def dsl_approach(
     print(f"\nMCP Server (can be local/private): {mcp_local_url}")
     print("\nCalling OpenAI API with CFG tool...")
 
+    # Measure latency
+    start_time = time.time()
+
     try:
         # Use CFG tool to generate DSL code
         response = client.responses.create(
@@ -182,23 +188,36 @@ def dsl_approach(
             print(f"    Total: {usage.total_tokens}")
 
             print("\n  Executing DSL code in runtime...")
+            runtime_start = time.time()
 
             # Execute DSL code in runtime
             dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
             dsl.execute(dsl_code)
+
+            runtime_time = time.time() - runtime_start
+            total_time = time.time() - start_time
+
+            print("\n  Latency:")
+            print(f"    LLM generation: {total_time - runtime_time:.2f}s")
+            print(f"    Runtime execution: {runtime_time:.2f}s")
+            print(f"    Total time: {total_time:.2f}s")
+            print("    (Runtime calls MCP directly - no data through LLM)")
         else:
             print("\n✗ No DSL code generated in response")
             print(f"  Response: {response}")
-            return 0, None
+            total_time = time.time() - start_time
+            return 0, None, total_time
 
         print("\n✅ Note: In DSL approach:")
         print(f"    - MCP servers can be local/private: {mcp_local_url}")
         print("    - Data flows: LLM → DSL code → Runtime → MCP (local)")
         print(f"    - Low token usage: {usage.total_tokens} tokens (no data in context)")
+        print(f"    - Latency: {total_time:.2f}s (LLM generates code, runtime executes)")
 
-        return usage.total_tokens, dsl_code
+        return usage.total_tokens, dsl_code, total_time
 
     except Exception as e:
+        total_time = time.time() - start_time
         print(f"\n✗ Error: {e}")
         print("  (This is expected if API key is not set or model not available)")
-        return 0, None
+        return 0, None, total_time

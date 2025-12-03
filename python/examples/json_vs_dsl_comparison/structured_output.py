@@ -8,6 +8,8 @@ This demonstrates the JSON/structured output approach where:
 4. High token usage because data is in context
 """
 
+import time
+
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -55,6 +57,9 @@ def structured_output_approach(
     print(f"\nMCP Server (MUST be public): {mcp_public_url}")
     print("\nCalling OpenAI API with MCP tools...")
 
+    # Measure latency
+    start_time = time.time()
+
     try:
         # LLM calls MCP via tools - MCP server MUST be publicly accessible
         response = client.responses.parse(
@@ -77,6 +82,7 @@ def structured_output_approach(
 
         result = response.output_parsed
         usage = response.usage
+        elapsed_time = time.time() - start_time
 
         # Inspect MCP tool calls in the response
         print("\n  MCP Tool Call Inspection:")
@@ -164,10 +170,12 @@ def structured_output_approach(
         print(f"    - MCP server MUST be publicly accessible: {mcp_public_url}")
         print("    - LLM calls MCP via tools → data flows into LLM context")
         print(f"    - High token usage: {usage.total_tokens} tokens (data in context)")
+        print(f"    - Latency: {elapsed_time:.2f}s (includes data transfer through LLM)")
 
-        return usage.total_tokens, result
+        return usage.total_tokens, result, elapsed_time
 
     except Exception as e:
+        elapsed_time = time.time() - start_time
         print(f"\n✗ Error: {e}")
         print("  (This is expected if API key is not set or model not available)")
-        return 0, None
+        return 0, None, elapsed_time
