@@ -20,7 +20,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("map(@square, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@square, data)")
 
     def test_filter_with_function_reference(self):
         """Test filter operation with function reference."""
@@ -33,7 +34,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("filter(@is_even, [1, 2, 3, 4])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("filter(@is_even, data)")
 
     def test_reduce_with_function_reference(self):
         """Test reduce operation with function reference."""
@@ -46,7 +48,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("reduce(@add, [1, 2, 3], 0)")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("reduce(@add, data, 0)")
 
     def test_compose_with_function_references(self):
         """Test compose operation with multiple function references."""
@@ -80,7 +83,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("pipe([1, 2, 3], @double, @square)")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("pipe(data, @double, @square)")
 
     def test_chained_functional_operations(self):
         """Test chaining functional operations."""
@@ -97,7 +101,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("map(@square, [1, 2, 3]).filter(@is_even, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@square, data).filter(@is_even, data)")
 
     def test_function_reference_resolution(self):
         """Test that function references resolve to actual handlers."""
@@ -110,7 +115,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Just verify it can be called - function reference resolution
         # will be tested when functional operations are fully implemented
-        grammar.execute("map(@square, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@square, data)")
 
     def test_reduce_without_initial(self):
         """Test reduce operation without initial value."""
@@ -123,7 +129,8 @@ class TestFunctionalMixin:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("reduce(@add, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("reduce(@add, data)")
 
 
 class TestFunctionReferences:
@@ -217,7 +224,8 @@ class TestFunctionReferences:
         grammar = TestGrammar()
         # Just verify it can be called - function reference resolution
         # will be tested when functional operations are fully implemented
-        grammar.execute("map(@square, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@square, data)")
 
     def test_unknown_function_reference(self):
         """Test handling of unknown function references."""
@@ -228,7 +236,8 @@ class TestFunctionReferences:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("map(@unknown, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@unknown, data)")
 
 
 class TestFunctionalIntegration:
@@ -250,9 +259,10 @@ class TestFunctionalIntegration:
 
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("map(@square, [1, 2, 3])")
-        grammar.execute("filter(@is_even, [1, 2, 3, 4])")
-        grammar.execute("map(@square, [1, 2, 3]).filter(@is_even, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@square, data)")
+        grammar.execute("filter(@is_even, data)")
+        grammar.execute("map(@square, data).filter(@is_even, data)")
 
     def test_functional_with_custom_runtime(self):
         """Test functional operations - no runtime needed in new API."""
@@ -265,7 +275,8 @@ class TestFunctionalIntegration:
         grammar = TestGrammar()
         # Functional operations are placeholders for now
         # Just verify they can be called without errors
-        grammar.execute("map(@square, [1, 2, 3])")
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        grammar.execute("map(@square, data)")
 
     def test_streaming_functional_operations(self):
         """Test streaming functional operations."""
@@ -282,5 +293,6 @@ class TestFunctionalIntegration:
         grammar = TestGrammar()
 
         # Stream yields None, but methods execute
-        results = list(grammar.stream("map(@square, [1, 2, 3]).map(@double, [1, 2, 3])"))
+        # Use identifier instead of list literal (grammar doesn't support lists)
+        results = list(grammar.stream("map(@square, data).map(@double, data)"))
         assert len(results) == 2  # Two None values
