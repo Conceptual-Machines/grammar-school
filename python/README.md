@@ -79,12 +79,12 @@ This is useful for:
 
 ## Functional Programming Support
 
-Grammar School supports functional programming paradigms through the `FunctionalMixin`:
+Grammar School allows you to implement functional programming patterns by defining your own methods:
 
 ```python
-from grammar_school import Grammar, FunctionalMixin, method
+from grammar_school import Grammar, method
 
-class MyGrammar(Grammar, FunctionalMixin):
+class MyGrammar(Grammar):
     @method
     def square(self, x):
         return x * x
@@ -93,8 +93,18 @@ class MyGrammar(Grammar, FunctionalMixin):
     def is_even(self, x):
         return x % 2 == 0
 
+    @method
+    def map(self, func, data):
+        # Implement your own map logic
+        return [func(x) for x in data]
+
+    @method
+    def filter(self, predicate, data):
+        # Implement your own filter logic
+        return [x for x in data if predicate(x)]
+
 grammar = MyGrammar()
-# Use functional operations with function references
+# Use functional operations - you provide the implementation
 grammar.execute('map(@square, data)')
 grammar.execute('filter(@is_even, data)')
 grammar.execute('map(@square, data).filter(@is_even, data)')

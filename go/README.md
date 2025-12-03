@@ -79,11 +79,10 @@ This is useful for:
 
 ## Functional Programming Support
 
-Grammar School supports functional programming paradigms through the `FunctionalMixin`:
+Grammar School allows you to implement functional programming patterns by defining your own methods:
 
 ```go
 type MyDSL struct {
-    gs.FunctionalMixin
 }
 
 func (d *MyDSL) Square(args gs.Args) error {
@@ -92,18 +91,27 @@ func (d *MyDSL) Square(args gs.Args) error {
     return nil
 }
 
-// Use functional operations with function references
+func (d *MyDSL) Map(args gs.Args) error {
+    // Implement your own map logic
+    funcRef := args["_positional_0"]
+    data := args["_positional_1"]
+    // ... your implementation
+    return nil
+}
+
+func (d *MyDSL) Filter(args gs.Args) error {
+    // Implement your own filter logic
+    predicate := args["_positional_0"]
+    data := args["_positional_1"]
+    // ... your implementation
+    return nil
+}
+
+// Use functional operations - you provide the implementation
 // map(@Square, data)
 // filter(@IsEven, data)
 // map(@Square, data).filter(@IsEven, data)
 ```
-
-**Available functional operations:**
-- `map(@function, data)` - Map a function over data
-- `filter(@predicate, data)` - Filter data using a predicate
-- `reduce(@function, data, initial)` - Reduce data using a function
-- `compose(@f, @g, @h)` - Compose multiple functions
-- `pipe(data, @f, @g, @h)` - Pipe data through functions
 
 **Function references:** Use `@function_name` syntax to pass functions as arguments. The parser must support parsing `@IDENTIFIER` as a `ValueFunction` kind.
 
@@ -128,7 +136,7 @@ See the `examples/` directory for complete DSL implementations.
 
 ### Functional Programming
 
-- `FunctionalMixin`: Embed this struct in your DSL to get `map`, `filter`, `reduce`, `compose`, and `pipe` operations
+Implement your own functional methods (`map`, `filter`, `reduce`, etc.) as regular `@method` handlers. The framework doesn't provide these - you implement them for your specific domain.
 
 ### Engine
 

@@ -22,30 +22,26 @@ The example demonstrates:
 
 ## Functional DSL
 
-An example demonstrating functional programming patterns using the `FunctionalMixin`:
-
-```bash
-cd go
-go run examples/functional_dsl.go
-```
-
-The example demonstrates:
-- **Function references**: Using `@function_name` syntax to pass functions as arguments
-- **Higher-order functions**: `map`, `filter`, `reduce` operations
-- **Function composition**: `compose` and `pipe` for chaining transformations
-- **Mixin pattern**: Embedding `FunctionalMixin` to get functional operations
+Users implement their own functional methods (map, filter, reduce, etc.) as regular method handlers. The framework doesn't provide these - you implement them for your specific domain needs.
 
 ```go
 type FunctionalDSL struct {
-    gs.FunctionalMixin
 }
 
-func (d *FunctionalDSL) Square(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *FunctionalDSL) Square(args gs.Args) error {
     x := args["x"].Num
-    return []gs.Action{{
-        Kind: "square",
-        Payload: map[string]interface{}{"value": x * x},
-    }}, ctx, nil
+    fmt.Printf("Square: %v\n", x*x)
+    return nil
+}
+
+func (d *FunctionalDSL) Map(args gs.Args) error {
+    // Your implementation
+    return nil
+}
+
+func (d *FunctionalDSL) Filter(args gs.Args) error {
+    // Your implementation
+    return nil
 }
 
 // Then use: map(@Square, data)

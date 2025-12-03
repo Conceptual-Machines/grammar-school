@@ -8,7 +8,6 @@ from grammar_school.cfg_vendor import (
     OpenAICFGProvider,
     OpenAICFGVendor,  # Backward compatibility
 )
-from grammar_school.functional import FunctionalMixin
 from grammar_school.grammar import Grammar, method, rule
 from grammar_school.grammar_builder import GrammarBuilder
 from grammar_school.grammar_config import (
@@ -29,7 +28,6 @@ __all__ = [
     "CFGProvider",
     "CFGVendor",  # Backward compatibility
     "DEFAULT_GRAMMAR",
-    "FunctionalMixin",
     "Grammar",
     "GrammarBuilder",
     "Interpreter",
