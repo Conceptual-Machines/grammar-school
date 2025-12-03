@@ -3,7 +3,7 @@
 This walkthrough demonstrates the fundamental difference between JSON/structured output and Domain-Specific Language (DSL) approaches when integrating LLMs with external data sources.
 
 !!! note "Inspiration"
-    This walkthrough and the Grammar School library were inspired by Anthropic's article on [Code execution with MCP: Building more efficient agents](https://www.anthropic.com/engineering/code-execution-with-mcp). The article explores how code execution enables agents to interact with MCP servers more efficiently by writing code instead of making direct tool calls, reducing token consumption and improving scalability.
+    This walkthrough and the Grammar School library were partly inspired by Anthropic's article on [Code execution with MCP: Building more efficient agents](https://www.anthropic.com/engineering/code-execution-with-mcp). The article explores how code execution enables agents to interact with MCP servers more efficiently by writing code instead of making direct tool calls, reducing token consumption and improving scalability.
 
 ## Overview
 

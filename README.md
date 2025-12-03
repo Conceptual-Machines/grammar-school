@@ -1,5 +1,9 @@
 # 🦉 Grammar School
 
+## Inspiration
+
+Grammar School was partly inspired by Anthropic's article on [Code execution with MCP: Building more efficient agents](https://www.anthropic.com/engineering/code-execution-with-mcp). The article explores how code execution enables agents to interact with MCP servers more efficiently by writing code instead of making direct tool calls, reducing token consumption and improving scalability. Grammar School extends these concepts by providing a framework for building custom DSLs that can be executed by a runtime, enabling developers to build scalable, cost-effective LLM applications.
+
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
