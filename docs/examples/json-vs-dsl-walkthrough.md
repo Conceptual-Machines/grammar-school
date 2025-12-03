@@ -206,6 +206,71 @@ class DataProcessingDSL(Grammar):
 5. Runtime processes data locally
 6. **No data flows through LLM context**
 
+## API Request Comparison
+
+The fundamental difference between the two approaches is visible in the OpenAI API request payloads. Here's a side-by-side comparison:
+
+### Structured Output (JSON) Request
+
+```python
+response = client.responses.parse(
+    model=model,
+    input=[...],
+    text_format=FilteredUsersResponse,  # Pydantic model → JSON schema
+    tools=[
+        {
+            "type": "mcp",
+            "server_label": "user_database",
+            "server_description": "A database MCP server...",
+            "server_url": f"{mcp_public_url}/mcp",  # MUST be public
+        }
+    ],
+)
+```
+
+**Key Points:**
+- **`text_format`**: Uses a Pydantic model (`FilteredUsersResponse`), which corresponds to `{"type": "json"}` with a JSON schema under the hood
+- **`tools`**: Defines MCP servers that the LLM can call to fetch data
+- **Data Flow**: MCP returns data → flows into LLM context → LLM generates JSON matching the schema
+
+### DSL (CFG) Request
+
+```python
+response = client.responses.create(
+    model=model,
+    input=[...],
+    text={"format": {"type": "text"}},  # Freeform text (default)
+    tools=[
+        {
+            "type": "custom",
+            "name": "data_processing_dsl",
+            "description": "Executes data processing operations...",
+            "format": {
+                "type": "grammar",
+                "syntax": "lark",
+                "definition": grammar_def,  # Full grammar definition
+            },
+        }
+    ],
+)
+```
+
+**Key Points:**
+- **`text`**: Uses freeform text format (default `{"type": "text"}`)
+- **`tools`**: Defines a custom tool with a grammar constraint (CFG) that enforces DSL syntax
+- **Data Flow**: LLM generates DSL code → runtime executes → runtime calls MCP (no data in LLM context)
+
+### Comparison Table
+
+| Aspect | Structured Output | DSL with CFG |
+|--------|------------------|--------------|
+| **API Method** | `responses.parse()` | `responses.create()` |
+| **Text Format** | `text_format=PydanticModel` → JSON schema | `text={"format": {"type": "text"}}` (freeform) |
+| **Tools Purpose** | Define MCP servers for LLM to call | Define grammar constraints for code generation |
+| **Tool Type** | `"type": "mcp"` | `"type": "custom"` with `"format": {"type": "grammar"}` |
+| **Grammar Overhead** | None (uses JSON schema) | ~2,000+ tokens (full grammar definition) |
+| **Data in Context** | Yes (all data from MCP flows through) | No (only instructions, not data) |
+
 ## Performance Comparison
 
 ### Token Usage
