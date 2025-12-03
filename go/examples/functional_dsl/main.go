@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"grammar-school/gs"
 	"strings"
@@ -13,79 +12,26 @@ type FunctionalDSL struct {
 }
 
 // Square squares a number.
-func (d *FunctionalDSL) Square(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *FunctionalDSL) Square(args gs.Args) error {
 	x := args["x"].Num
-	action := gs.Action{
-		Kind: "square",
-		Payload: map[string]interface{}{
-			"value": x * x,
-		},
-	}
-	return []gs.Action{action}, ctx, nil
+	result := x * x
+	fmt.Printf("Square(%.2f) = %.2f\n", x, result)
+	return nil
 }
 
 // Double doubles a number.
-func (d *FunctionalDSL) Double(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *FunctionalDSL) Double(args gs.Args) error {
 	x := args["x"].Num
-	action := gs.Action{
-		Kind: "double",
-		Payload: map[string]interface{}{
-			"value": x * 2,
-		},
-	}
-	return []gs.Action{action}, ctx, nil
+	result := x * 2
+	fmt.Printf("Double(%.2f) = %.2f\n", x, result)
+	return nil
 }
 
 // IsEven checks if a number is even.
-func (d *FunctionalDSL) IsEven(args gs.Args, ctx *gs.Context) ([]gs.Action, *gs.Context, error) {
+func (d *FunctionalDSL) IsEven(args gs.Args) error {
 	x := args["x"].Num
-	action := gs.Action{
-		Kind: "is_even",
-		Payload: map[string]interface{}{
-			"value": int(x)%2 == 0,
-		},
-	}
-	return []gs.Action{action}, ctx, nil
-}
-
-// FunctionalRuntime executes functional operations.
-type FunctionalRuntime struct{}
-
-func (r *FunctionalRuntime) ExecuteAction(ctx context.Context, a gs.Action) error {
-	switch a.Kind {
-	case "map":
-		funcName, ok := a.Payload["func"].(string)
-		if !ok {
-			return fmt.Errorf("invalid type for 'func' in map action: expected string")
-		}
-		fmt.Printf("Map %s over data\n", funcName)
-	case "filter":
-		predicate, ok := a.Payload["predicate"].(string)
-		if !ok {
-			return fmt.Errorf("invalid type for 'predicate' in filter action: expected string")
-		}
-		fmt.Printf("Filter data using %s\n", predicate)
-	case "reduce":
-		funcName, ok := a.Payload["func"].(string)
-		if !ok {
-			return fmt.Errorf("invalid type for 'func' in reduce action: expected string")
-		}
-		fmt.Printf("Reduce data using %s\n", funcName)
-	case "compose":
-		funcs, ok := a.Payload["functions"].([]string)
-		if !ok {
-			return fmt.Errorf("invalid type for 'functions' in compose action: expected []string")
-		}
-		fmt.Printf("Compose functions: %v\n", funcs)
-	case "pipe":
-		funcs, ok := a.Payload["functions"].([]string)
-		if !ok {
-			return fmt.Errorf("invalid type for 'functions' in pipe action: expected []string")
-		}
-		fmt.Printf("Pipe data through: %v\n", funcs)
-	default:
-		fmt.Printf("Action: %s with payload: %v\n", a.Kind, a.Payload)
-	}
+	result := int(x)%2 == 0
+	fmt.Printf("IsEven(%.2f) = %v\n", x, result)
 	return nil
 }
 
@@ -99,9 +45,9 @@ func (p *FunctionalParser) Parse(input string) (*gs.CallChain, error) {
 func main() {
 	dsl := &FunctionalDSL{}
 	parser := &FunctionalParser{}
-	runtime := &FunctionalRuntime{}
 
-	_, err := gs.NewEngine("", dsl, parser, runtime)
+	// Create engine with new unified API (no runtime needed)
+	_, err := gs.NewEngine("", dsl, parser)
 	if err != nil {
 		fmt.Printf("Error creating engine: %v\n", err)
 		return
@@ -121,6 +67,10 @@ func main() {
 	fmt.Println("  - pipe(data, @Double, @Square)")
 
 	// Once parser is implemented, you could do:
-	// actions, _ := engine.Compile("map(@Square, data)")
-	// engine.Execute(context.Background(), actions)
+	// engine, _ := gs.NewEngine("", dsl, parser)
+	// err := engine.Execute(context.Background(), "map(@Square, data)")
+	// if err != nil {
+	// 	fmt.Printf("Error executing: %v\n", err)
+	// 	return
+	// }
 }
