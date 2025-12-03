@@ -157,6 +157,8 @@ class Interpreter:
         elif expr.operator == "*":
             return left_val * right_val
         elif expr.operator == "/":
+            if right_val == 0:
+                raise ValueError("Division by zero is not allowed in Grammar School expressions.")
             return left_val / right_val
         elif expr.operator == "==":
             return left_val == right_val
@@ -201,6 +203,8 @@ class Interpreter:
                 result = getattr(result, prop_name)
             elif isinstance(result, dict):
                 result = result.get(prop_name)
+                if result is None:
+                    raise ValueError(f"Property '{prop_name}' not found in dict")
             else:
                 raise ValueError(f"Property '{prop_name}' not found on {type(result).__name__}")
 

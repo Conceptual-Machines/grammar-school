@@ -29,7 +29,7 @@ atom: NUMBER
     | STRING
     | BOOL
     | IDENTIFIER
-    | property_access
+    | property_access  // Must come after IDENTIFIER - Lark prefers longer matches
     | function_ref
     | "(" expression ")"
 
