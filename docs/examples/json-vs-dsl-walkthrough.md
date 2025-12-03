@@ -60,7 +60,6 @@ class FilteredUsersResponse(BaseModel):
     """Response model for filtered users."""
 
     users: list[User]
-    count: int  # Add this line
     count: int
 ```
 
@@ -84,15 +83,11 @@ class FilteredUsersResponse(BaseModel):
                 }
             ],
         )
-        # ... rest of the code handles response parsing and error handling ...
-```
 
-                    "require_approval": "never",
-                }
-            ],
-        )
-    except Exception as e:
-        print("Error:", e)
+        result = response.output_parsed
+        usage = response.usage
+        elapsed_time = time.time() - start_time
+```
 **What happens:**
 1. LLM receives prompt
 2. LLM calls MCP server (public URL required)
@@ -152,7 +147,6 @@ class DataProcessingDSL(Grammar):
         except Exception as e:
             print(f"  [Runtime] Email send failed: {e}")
         return self
-        return self
 ```
 
 ```python
@@ -211,9 +205,10 @@ class DataProcessingDSL(Grammar):
 
             # Execute DSL code in runtime
             dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
-            dsl.execute(dsl_code)  # Add this line
             dsl.execute(dsl_code)
-            # ... rest of the code handles timing and error handling ...
+
+            runtime_time = time.time() - runtime_start
+            total_time = time.time() - start_time
 ```
 <｜tool▁call▁begin｜>
 run_terminal_cmd
