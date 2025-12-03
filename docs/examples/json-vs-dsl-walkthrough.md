@@ -83,6 +83,7 @@ class FilteredUsersResponse(BaseModel):
                 }
             ],
         )
+        # ... rest of the code handles response parsing and error handling ...
 ```
 
 **What happens:**
@@ -203,6 +204,7 @@ class DataProcessingDSL(Grammar):
             # Execute DSL code in runtime
             dsl = DataProcessingDSL(mcp_local_url=mcp_local_url)
             dsl.execute(dsl_code)
+            # ... rest of the code handles timing and error handling ...
 ```
 <｜tool▁call▁begin｜>
 run_terminal_cmd
